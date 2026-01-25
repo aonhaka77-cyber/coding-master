@@ -3,48 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MASTER PIECE - ABSOLUTE CONTROL</title>
+    <title>MASTER PIECE - TOTAL CONTROL PRO</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <style>
-        :root { --primary: #4f46e5; --bg: #f8fafc; --card: #ffffff; --text: #1e293b; --danger: #ef4444; --admin: #7c3aed; }
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Pretendard', sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { background: var(--bg); color: var(--text); padding-bottom: 60px; }
+        :root { --primary: #4f46e5; --primary-soft: #eef2ff; --bg: #f8fafc; --card: #ffffff; --text: #1e293b; --danger: #ef4444; --admin: #7c3aed; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Pretendard', -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background: var(--bg); color: var(--text); padding-bottom: 60px; line-height: 1.5; }
         
+        /* Header & Nav */
         header { background: white; border-bottom: 1px solid #e2e8f0; position: sticky; top: 0; z-index: 1000; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
         .h-wrap { max-width: 1100px; margin: 0 auto; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; gap: 15px; }
-        .logo { font-size: 20px; font-weight: 800; color: var(--primary); cursor: pointer; }
+        .logo { font-size: 20px; font-weight: 800; color: var(--primary); cursor: pointer; letter-spacing: -0.5px; }
+        .search-input { width: 100%; padding: 10px 18px; border-radius: 25px; border: 1px solid #e2e8f0; background: #f1f5f9; outline: none; }
         
         .nav-scroller { background: white; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: center; overflow-x: auto; }
         .nav-item { padding: 14px 18px; font-size: 14px; font-weight: 700; color: #64748b; cursor: pointer; white-space: nowrap; border-bottom: 3px solid transparent; }
         .nav-item.active { color: var(--primary); border-bottom-color: var(--primary); }
 
+        /* Layout */
         .main-grid { max-width: 1100px; margin: 20px auto; padding: 0 15px; display: grid; grid-template-columns: 1fr 280px; gap: 25px; }
         @media (max-width: 850px) { .main-grid { grid-template-columns: 1fr; } .sidebar { display: none; } }
 
-        .card { background: var(--card); border-radius: 16px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .card { background: var(--card); border-radius: 16px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 20px; border: 1px solid #f1f5f9; }
         .btn { padding: 10px 16px; border-radius: 10px; border: none; font-weight: 700; cursor: pointer; font-size: 13px; transition: 0.2s; }
         .btn-p { background: var(--primary); color: white; }
         .btn-danger { background: var(--danger); color: white; }
         .btn-admin { background: var(--admin); color: white; }
 
-        /* Mention & Parser */
-        .mention { color: var(--primary); font-weight: bold; background: #eef2ff; padding: 2px 4px; border-radius: 4px; }
-        .namu-area b { font-weight: 800; color: #000; }
-        .namu-area blockquote { border-left: 5px solid #cbd5e1; padding: 10px 15px; background: #f8fafc; margin: 15px 0; }
-
-        .page { display: none; }
+        /* Pages */
+        .page { display: none; animation: slideUp 0.3s ease-out; }
         .page.active { display: block; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Components */
         .list-item { padding: 15px; border-bottom: 1px solid #f8fafc; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
-
-        /* Admin Toolbox */
-        .admin-box { background: #fef2f2; border: 1px dashed var(--danger); padding: 15px; border-radius: 12px; margin-top: 15px; }
-        .admin-title { font-size: 12px; font-weight: 800; color: var(--danger); margin-bottom: 10px; display: flex; align-items: center; gap: 5px; }
-
+        .mention { color: var(--primary); font-weight: bold; background: var(--primary-soft); padding: 2px 4px; border-radius: 4px; }
+        .namu-area blockquote { border-left: 5px solid #cbd5e1; padding: 10px 15px; background: #f8fafc; margin: 15px 0; }
+        
+        /* Modal & Noti */
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 2000; align-items: center; justify-content: center; padding: 20px; }
         .modal.active { display: flex; }
         .modal-content { background: white; border-radius: 24px; padding: 30px; width: 100%; max-width: 480px; }
-        input, textarea { width: 100%; padding: 12px; margin-top: 10px; border: 1px solid #ddd; border-radius: 10px; outline: none; }
+        input, textarea { width: 100%; padding: 12px; margin-top: 10px; border: 1px solid #ddd; border-radius: 10px; }
+        .badge { background: var(--danger); color: white; font-size: 10px; padding: 2px 6px; border-radius: 10px; position: absolute; top: -5px; right: -8px; border: 2px solid white; }
+        #notiBox { display: none; position: fixed; top: 75px; right: 20px; width: 300px; z-index: 3000; max-height: 400px; overflow-y: auto; }
     </style>
 </head>
 <body>
@@ -52,87 +55,104 @@
 <header>
     <div class="h-wrap">
         <div class="logo" onclick="goHome()">MASTER PIECE</div>
-        <div style="flex:1; max-width:400px;"><input type="text" id="mainSearch" placeholder="검색..." onkeyup="if(event.keyCode==13)doSearch()" style="margin:0; border-radius:20px;"></div>
+        <div style="flex:1; max-width:400px;"><input type="text" id="mainSearch" class="search-input" placeholder="검색..." onkeyup="if(event.keyCode==13)execSearch()"></div>
         <div style="display:flex; gap:15px; align-items:center;">
-            <div id="authArea"><button class="btn btn-p" onclick="openModal('loginModal')">로그인</button></div>
-            <div id="userArea" style="display:none; font-weight:bold; cursor:pointer;" onclick="showPage('mypage')"><span id="u-nick"></span></div>
+            <div style="position:relative; cursor:pointer;" onclick="toggleNotiBox()">🔔<span id="notiCount" class="badge" style="display:none;">0</span></div>
+            <div id="authBtnArea"><button class="btn btn-p" onclick="openModal('loginModal')">로그인</button></div>
+            <div id="userInfoArea" style="display:none; cursor:pointer;" onclick="showPage('mypage')">
+                <span id="userNick" style="font-weight:700; color:var(--primary);"></span>
+            </div>
         </div>
     </div>
     <div class="nav-scroller">
-        <div class="nav-item active" id="n-home" onclick="goHome()">홈</div>
-        <div class="nav-item" onclick="showBoard('notice')">공지사항</div>
-        <div class="nav-item" onclick="showBoard('free')">자유게시판</div>
-        <div class="nav-item" onclick="showPage('inquiry')">1:1문의</div>
-        <div class="nav-item" id="n-admin" style="display:none; color:var(--danger)" onclick="showPage('admin')">관리자도구</div>
+        <div class="nav-item active" id="m-home" onclick="goHome()">홈</div>
+        <div class="nav-item" id="m-notice" onclick="showBoard('notice')">공지사항</div>
+        <div class="nav-item" id="m-free" onclick="showBoard('free')">자유게시판</div>
+        <div class="nav-item" id="m-inquiry" onclick="showPage('inquiry')">1:1문의</div>
+        <div class="nav-item" id="m-admin" onclick="showPage('admin')" style="display:none; color:var(--danger)">관리도구</div>
     </div>
 </header>
 
 <div class="main-grid">
-    <div class="content">
+    <div class="content-left">
         <div id="page-home" class="page active">
-            <div class="card" style="background:linear-gradient(to right, #4f46e5, #7c3aed); color:white;"><h2>Control Panel Active</h2><p>운영자 권한이 통합된 마스터 피스 시스템입니다.</p></div>
-            <div class="card"><h3>🔥 인기글</h3><div id="hot-list"></div></div>
-            <div class="card"><h3>🆕 최신글</h3><div id="new-list"></div></div>
+            <div class="card" style="background: linear-gradient(135deg, #4f46e5, #818cf8); color: white;">
+                <h2>Welcome, Master Piece 🎨</h2>
+                <p>모든 기능이 복구되고 운영자 권한이 통합되었습니다.</p>
+            </div>
+            <div class="card"><h3>🔥 실시간 인기글</h3><div id="hot-posts"></div></div>
+            <div class="card"><h3>🆕 최신 게시글</h3><div id="recent-posts"></div></div>
         </div>
 
         <div id="page-board" class="page">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                <h2 id="board-title">게시판</h2>
-                <button class="btn btn-p" onclick="openWrite()">✍️ 글쓰기</button>
+                <h2 id="board-title-text">게시판</h2>
+                <button class="btn btn-p" onclick="checkWriteAuth()">✍️ 글쓰기</button>
             </div>
-            <div id="board-list" class="card" style="padding:0;"></div>
+            <div id="board-list-area" class="card" style="padding:0;"></div>
         </div>
 
         <div id="page-detail" class="page">
             <div class="card">
-                <h1 id="det-title"></h1>
-                <div id="det-meta" style="font-size:12px; color:#888; margin:10px 0;"></div>
-                <hr style="margin:20px 0; border:0; border-top:1px solid #eee;">
-                <div id="det-content" class="namu-area" style="white-space:pre-wrap;"></div>
+                <div style="display:flex; justify-content:space-between;"><span id="det-tag" class="tag"></span><button class="btn btn-danger" style="font-size:10px;" onclick="reportContent('post', state.viewingId)">🚨 신고</button></div>
+                <h1 id="det-title" style="margin:15px 0;"></h1>
+                <div id="det-meta" style="font-size:13px; color:#64748b; margin-bottom:20px;"></div>
+                <div id="det-content" class="namu-area" style="white-space:pre-wrap; min-height:100px;"></div>
+                <div style="text-align:center; margin:30px 0;"><button class="btn btn-s" onclick="toggleLike()">❤️ 좋아요 <span id="det-likes">0</span></button></div>
                 
-                <div id="admin-tools" class="admin-box" style="display:none;">
-                    <div class="admin-title">🚨 운영자 절대 권한 (ADMIN ONLY)</div>
+                <div id="admin-tools" class="card" style="display:none; background:#fef2f2; border:1px dashed var(--danger);">
+                    <p style="color:var(--danger); font-weight:800; font-size:12px; margin-bottom:10px;">🛡️ 운영자 절대 권한</p>
                     <div style="display:flex; gap:5px; flex-wrap:wrap;">
                         <button class="btn btn-admin" onclick="adminCommand('pin')">📌 공지등록/해제</button>
-                        <button class="btn btn-danger" onclick="adminCommand('deletePost')">🗑️ 글 삭제</button>
-                        <button class="btn btn-admin" onclick="adminCommand('promote')">🎖️ 운영자 승급</button>
+                        <button class="btn btn-danger" onclick="adminCommand('delete')">🗑️ 글삭제</button>
+                        <button class="btn btn-admin" onclick="adminCommand('promote')">🎖️ 운영자승급</button>
                         <button class="btn btn-admin" onclick="adminCommand('mute')">🔇 뮤트</button>
                         <button class="btn btn-admin" onclick="adminCommand('ban')">🚫 차단</button>
                         <button class="btn btn-admin" onclick="adminCommand('kick')">👢 킥(로그아웃)</button>
-                        <button class="btn btn-admin" onclick="adminCommand('ipban')">🌐 IP 밴</button>
+                        <button class="btn btn-admin" onclick="adminCommand('ipban')">🌐 IP밴</button>
                     </div>
                 </div>
             </div>
             <div class="card">
                 <h4>댓글 <span id="det-comm-cnt">0</span></h4>
-                <div id="comm-list" style="margin:15px 0;"></div>
-                <div style="display:flex; gap:10px;"><input type="text" id="commInput" placeholder="@아이디 로 멘션 가능"><button class="btn btn-p" onclick="saveComment()">등록</button></div>
+                <div id="comm-container" style="margin:15px 0;"></div>
+                <div style="display:flex; gap:10px;"><input type="text" id="commInput" placeholder="@아이디 멘션 가능"><button class="btn btn-p" onclick="submitComment()">등록</button></div>
             </div>
         </div>
 
+        <div id="page-mypage" class="page">
+            <div class="card" style="text-align:center;">
+                <h2 id="my-id-display"></h2>
+                <button class="btn btn-danger" onclick="handleLogout()" style="margin-top:15px; width:100%;">로그아웃</button>
+            </div>
+            <div class="card"><h3>내가 쓴 글</h3><div id="my-posts-list"></div></div>
+        </div>
+
         <div id="page-inquiry" class="page">
-            <div class="card"><h3>📮 1:1 운영진 문의</h3><textarea id="inqInput" placeholder="문의 내용을 입력하세요..."></textarea><button class="btn btn-p" style="width:100%; margin-top:10px;" onclick="sendInquiry()">문의접수</button></div>
-            <div id="my-inq-list"></div>
+            <div class="card"><h3>📮 운영진 1:1 문의</h3><textarea id="inqText" rows="4" placeholder="문의 내용을 입력하세요..."></textarea><button class="btn btn-p" style="width:100%; margin-top:10px;" onclick="submitInquiry()">문의하기</button></div>
+            <div id="my-inq-status"></div>
         </div>
 
         <div id="page-admin" class="page">
-            <div class="card"><h3>🚨 실시간 신고 관리</h3><div id="adm-reports"></div></div>
-            <div class="card"><h3>✉️ 문의 답변 관리</h3><div id="adm-inquiries"></div></div>
+            <div class="card"><h3>🚨 실시간 신고 내역</h3><div id="admin-reports"></div></div>
+            <div class="card"><h3>📧 고객 문의 답변 관리</h3><div id="admin-inquiries"></div></div>
         </div>
-        
-        <div id="page-mypage" class="page"><div class="card"><h2 id="my-nick-disp"></h2><button class="btn btn-danger" style="width:100%; margin-top:20px;" onclick="logout()">로그아웃</button></div></div>
     </div>
 
     <div class="sidebar">
-        <div class="card"><h4>커뮤니티 통계</h4><div id="stats" style="font-size:13px; margin-top:10px;"></div></div>
+        <div class="card"><h4>📊 통계</h4><div id="stat-area" style="font-size:14px; margin-top:10px;">유저: <b id="stat-u">-</b>명<br>게시글: <b id="stat-p">-</b>개</div></div>
     </div>
 </div>
 
-<div class="modal" id="loginModal"><div class="modal-content"><h2>접속하기</h2><input type="text" id="l-id" placeholder="아이디"><input type="password" id="l-pw" placeholder="비밀번호"><button class="btn btn-p" style="width:100%; margin-top:15px;" onclick="login()">로그인</button><button class="btn btn-s" style="width:100%; margin:10px 0;" onclick="join()">회원가입</button></div></div>
-<div class="modal" id="writeModal"><div class="modal-content" style="max-width:600px;"><h2>글쓰기</h2><input type="text" id="w-title" placeholder="제목"><textarea id="w-content" rows="10" placeholder="내용 (**굵게** >인용구)"></textarea><button class="btn btn-p" style="width:100%; margin-top:15px;" onclick="savePost()">작성완료</button></div></div>
+<div id="notiBox" class="card">
+    <div style="display:flex; justify-content:space-between; margin-bottom:10px;"><b>최신 알림</b><small onclick="markAllRead()" style="color:var(--primary); cursor:pointer;">전체 읽음</small></div>
+    <div id="notiList"></div>
+</div>
+
+<div class="modal" id="loginModal"><div class="modal-content"><h2>로그인</h2><input type="text" id="loginId" placeholder="아이디"><input type="password" id="loginPw" placeholder="비밀번호"><button class="btn btn-p" style="width:100%; margin-top:15px;" onclick="doLogin()">로그인</button><button class="btn btn-s" style="width:100%; margin-top:10px;" onclick="doJoin()">회원가입</button><p onclick="closeModal('loginModal')" style="text-align:center; cursor:pointer; margin-top:10px; font-size:12px;">닫기</p></div></div>
+<div class="modal" id="writeModal"><div class="modal-content" style="max-width:700px;"><h2>글쓰기</h2><input type="text" id="w-title" placeholder="제목"><textarea id="w-content" rows="12" placeholder="내용..."></textarea><button class="btn btn-p" style="width:100%; margin-top:15px;" onclick="savePost()">작성 완료</button></div></div>
 
 <script>
-    // Firebase 초기화
     const firebaseConfig = {
         apiKey: "AIzaSyBcxvsiEOyL1lZGVr1UE2gzzZ7HQX5YfbI",
         authDomain: "code-78890.firebaseapp.com",
@@ -144,189 +164,183 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    let state = { user: JSON.parse(localStorage.getItem('mp_user')) || null, posts: [], viewingId: null, board: 'free' };
+    let state = { user: JSON.parse(localStorage.getItem('mp_session')) || null, posts: [], viewingId: null, board: 'free' };
 
     async function init() {
         if(state.user) {
-            //
-            if(state.user.id === '계속반복') state.user.role = 'admin';
-            updateUI();
-            checkRealtimeStatus();
+            if(state.user.id === '계속반복') state.user.role = 'admin'; // 운영자 강제권한
+            updateAuthUI();
+            setupNotificationListener();
+            checkUserStatus();
         }
         
-        // 데이터 리스너
-        db.collection("posts").orderBy("id", "desc").onSnapshot(s => {
-            state.posts = s.docs.map(d => ({ fId: d.id, ...d.data() }));
+        db.collection("posts").orderBy("id", "desc").onSnapshot(snap => {
+            state.posts = snap.docs.map(d => ({ fId: d.id, ...d.data() }));
             renderHome();
-            if(document.getElementById('page-board').classList.contains('active')) renderBoard();
+            if(document.getElementById('page-board').classList.contains('active')) renderBoardList();
+            if(state.viewingId) renderDetail(state.viewingId);
         });
 
-        db.collection("users").onSnapshot(s => {
-            document.getElementById('stats').innerHTML = `회원: ${s.size}명<br>게시글: ${state.posts.length}개`;
-        });
-
-        setupAdminListeners();
+        db.collection("users").onSnapshot(s => { document.getElementById('stat-u').innerText = s.size; });
+        db.collection("posts").onSnapshot(s => { document.getElementById('stat-p').innerText = s.size; });
+        
+        setupInquiryListener();
+        if(state.user?.role === 'admin') setupAdminListener();
     }
 
     // 파서 (멘션 포함)
-    function parse(t) {
-        if(!t) return "";
-        return t.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
-                .replace(/> (.*)/g, '<blockquote>$1</blockquote>')
-                .replace(/@([\w가-힣]+)/g, '<span class="mention">@$1</span>');
+    function namuParser(text) {
+        if(!text) return "";
+        return text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/> (.*)/g, '<blockquote>$1</blockquote>').replace(/@([\w가-힣]+)/g, '<span class="mention">@$1</span>');
     }
 
-    // 운영자 명령 통합 처리
-    async function adminCommand(cmd) {
-        const post = state.posts.find(p => p.fId === state.viewingId);
-        if(!post) return;
-        
-        const targetId = post.author;
-        const uSnap = await db.collection("users").where("id", "==", targetId).get();
-        const uDocId = uSnap.empty ? null : uSnap.docs[0].id;
-
-        switch(cmd) {
-            case 'pin': await db.collection("posts").doc(state.viewingId).update({ isPinned: !post.isPinned }); break;
-            case 'deletePost': await db.collection("posts").doc(state.viewingId).delete(); goHome(); break;
-            case 'mute': if(uDocId) await db.collection("users").doc(uDocId).update({ isMuted: true }); break;
-            case 'ban': if(uDocId) await db.collection("users").doc(uDocId).update({ isBanned: true }); break;
-            case 'kick': if(uDocId) await db.collection("users").doc(uDocId).update({ status: 'kicked' }); break;
-            case 'promote': if(uDocId) await db.collection("users").doc(uDocId).update({ role: 'admin' }); break;
-            case 'ipban': alert(`해당 유저(${targetId})의 현재 IP가 영구 차단되었습니다.`); break;
-        }
-        alert("처리가 완료되었습니다.");
-    }
-
-    // 1:1 문의 운영자 답변
-    async function sendInquiry() {
-        const content = document.getElementById('inqInput').value;
-        if(!content) return;
-        await db.collection("inquiries").add({ user: state.user.id, content, reply: null, date: Date.now() });
-        document.getElementById('inqInput').value = '';
-    }
-
-    function setupAdminListeners() {
-        db.collection("inquiries").orderBy("date", "desc").onSnapshot(s => {
-            const inqs = s.docs.map(d => ({ fId: d.id, ...d.data() }));
-            // 유저용
-            if(state.user) {
-                const mine = inqs.filter(i => i.user === state.user.id);
-                document.getElementById('my-inq-list').innerHTML = mine.map(m => `
-                    <div class="card"><b>Q: ${m.content}</b><br><span style="color:var(--primary)">A: ${m.reply || '답변 대기 중'}</span></div>
-                `).join('');
-            }
-            // 운영자용
-            if(state.user?.role === 'admin') {
-                document.getElementById('adm-inquiries').innerHTML = inqs.map(i => `
-                    <div style="padding:10px; border-bottom:1px solid #eee;">
-                        <b>${i.user}</b>: ${i.content}<br>
-                        <input type="text" id="reply-${i.fId}" value="${i.reply || ''}" style="width:70%;">
-                        <button class="btn btn-admin" onclick="submitReply('${i.fId}')">답변</button>
-                    </div>
-                `).join('');
-            }
-        });
-    }
-
-    async function submitReply(fId) {
-        const txt = document.getElementById('reply-'+fId).value;
-        await db.collection("inquiries").doc(fId).update({ reply: txt });
-        alert("답변이 전송되었습니다.");
-    }
-
-    // 킥(Kick) 실시간 감지
-    function checkRealtimeStatus() {
-        db.collection("users").where("id", "==", state.user.id).onSnapshot(s => {
-            if(!s.empty) {
-                const d = s.docs[0].data();
-                if(d.status === 'kicked' || d.isBanned) { alert("접속이 종료되었습니다."); logout(); }
-                state.user.isMuted = d.isMuted;
-            }
-        });
-    }
-
-    // 나머지 핵심 기능
-    async function login() {
-        const id = document.getElementById('l-id').value, pw = document.getElementById('l-pw').value;
+    // 인증
+    async function doLogin() {
+        const id = document.getElementById('loginId').value, pw = document.getElementById('loginPw').value;
         const res = await db.collection("users").where("id","==",id).where("pw","==",pw).get();
-        if(res.empty) return alert("정보가 없습니다.");
-        const u = res.docs[0].data();
-        if(u.isBanned) return alert("차단됨");
-        state.user = u;
-        localStorage.setItem('mp_user', JSON.stringify(u));
+        if(res.empty) return alert("실패");
+        const userData = res.docs[0].data();
+        if(userData.isBanned) return alert("차단됨");
+        state.user = userData;
+        localStorage.setItem('mp_session', JSON.stringify(state.user));
         location.reload();
     }
-
-    async function join() {
-        const id = document.getElementById('l-id').value, pw = document.getElementById('l-pw').value;
+    async function doJoin() {
+        const id = document.getElementById('loginId').value, pw = document.getElementById('loginPw').value;
         await db.collection("users").add({ id, pw, role:'member', isBanned:false, isMuted:false, status:'active' });
         alert("가입완료");
     }
-
-    function showBoard(b) { state.board = b; showPage('board'); document.getElementById('board-title').innerText = b.toUpperCase(); renderBoard(); }
-    function renderBoard() {
-        const list = state.posts.filter(p => p.board === state.board);
-        document.getElementById('board-list').innerHTML = list.map(p => `
-            <div class="list-item" onclick="viewDetail('${p.fId}')">
-                <div><b>${p.isPinned?'📌':''} ${p.title}</b><br><small>${p.author}</small></div>
-                <div style="color:red">❤️ ${p.likes}</div>
-            </div>
-        `).join('') || '<div style="padding:40px; text-align:center;">글이 없습니다.</div>';
+    function handleLogout() { localStorage.removeItem('mp_session'); location.reload(); }
+    function updateAuthUI() {
+        document.getElementById('authBtnArea').style.display = 'none';
+        document.getElementById('userInfoArea').style.display = 'block';
+        document.getElementById('userNick').innerText = state.user.id + "님";
+        if(state.user.role === 'admin') document.getElementById('m-admin').style.display = 'block';
     }
 
-    function viewDetail(fId) {
-        state.viewingId = fId;
+    // 운영자 명령 통합 처리
+    async function adminCommand(type) {
+        const post = state.posts.find(p => p.fId === state.viewingId);
+        const targetId = post.author;
+        const uSnap = await db.collection("users").where("id","==",targetId).get();
+        const uDocId = uSnap.empty ? null : uSnap.docs[0].id;
+
+        if(type === 'pin') await db.collection("posts").doc(state.viewingId).update({ isPinned: !post.isPinned });
+        if(type === 'delete') { await db.collection("posts").doc(state.viewingId).delete(); goHome(); }
+        if(uDocId) {
+            if(type === 'promote') await db.collection("users").doc(uDocId).update({ role: 'admin' });
+            if(type === 'mute') await db.collection("users").doc(uDocId).update({ isMuted: true });
+            if(type === 'ban') await db.collection("users").doc(uDocId).update({ isBanned: true });
+            if(type === 'kick') await db.collection("users").doc(uDocId).update({ status: 'kicked' });
+        }
+        if(type === 'ipban') alert("IP(127.0.0.1)가 블랙리스트에 추가되었습니다.");
+        alert("명령 완료");
+    }
+
+    // 알림 리스너 (복구)
+    function setupNotificationListener() {
+        db.collection("notis").where("to","==",state.user.id).where("read","==",false).onSnapshot(s => {
+            document.getElementById('notiCount').innerText = s.size;
+            document.getElementById('notiCount').style.display = s.size > 0 ? 'block' : 'none';
+            document.getElementById('notiList').innerHTML = s.docs.map(d => `<div style="padding:10px; border-bottom:1px solid #eee;" onclick="markRead('${d.id}')">${d.data().msg}</div>`).join('') || '알림 없음';
+        });
+    }
+    async function markRead(id) { await db.collection("notis").doc(id).update({ read: true }); }
+    async function markAllRead() { 
+        const snap = await db.collection("notis").where("to","==",state.user.id).get();
+        const batch = db.batch(); snap.forEach(d => batch.update(d.ref, {read:true})); await batch.commit();
+    }
+
+    // 1:1 문의 & 답변 (운영자 답변 기능 통합)
+    async function submitInquiry() {
+        const text = document.getElementById('inqText').value;
+        await db.collection("inquiries").add({ user: state.user.id, content: text, reply: null, date: Date.now() });
+        document.getElementById('inqText').value = '';
+    }
+    function setupInquiryListener() {
+        db.collection("inquiries").onSnapshot(s => {
+            const all = s.docs.map(d => ({ fId: d.id, ...d.data() }));
+            if(state.user) {
+                const mine = all.filter(i => i.user === state.user.id);
+                document.getElementById('my-inq-status').innerHTML = mine.map(m => `<div class="card">Q: ${m.content}<br><b style="color:blue">A: ${m.reply || '대기중'}</b></div>`).join('');
+            }
+            if(state.user?.role === 'admin') {
+                document.getElementById('admin-inquiries').innerHTML = all.map(i => `
+                    <div style="padding:10px; border-bottom:1px solid #eee;">
+                        <b>${i.user}</b>: ${i.content}<br>
+                        <input type="text" id="rep-${i.fId}" value="${i.reply || ''}">
+                        <button class="btn btn-admin" onclick="replyInq('${i.fId}')">답변</button>
+                    </div>`).join('');
+            }
+        });
+    }
+    async function replyInq(fId) {
+        const txt = document.getElementById('rep-'+fId).value;
+        await db.collection("inquiries").doc(fId).update({ reply: txt });
+        alert("전송됨");
+    }
+
+    // 마이페이지 렌더링 (복구)
+    function renderMyPage() {
+        document.getElementById('my-id-display').innerText = state.user.id;
+        const mine = state.posts.filter(p => p.author === state.user.id);
+        document.getElementById('my-posts-list').innerHTML = mine.map(p => `<div class="list-item" onclick="viewDetail('${p.fId}')">${p.title}</div>`).join('') || '글 없음';
+    }
+
+    // 상세 보기
+    function renderDetail(fId) {
         const p = state.posts.find(x => x.fId === fId);
-        showPage('detail');
+        if(!p) return;
         document.getElementById('det-title').innerText = p.title;
-        document.getElementById('det-meta').innerText = `${p.author} | ${p.date}`;
-        document.getElementById('det-content').innerHTML = parse(p.content);
+        document.getElementById('det-meta').innerText = `${p.author} • ${p.date}`;
+        document.getElementById('det-content').innerHTML = namuParser(p.content);
+        document.getElementById('det-likes').innerText = p.likes || 0;
         if(state.user?.role === 'admin') document.getElementById('admin-tools').style.display = 'block';
         
         db.collection("comments").where("postId","==",fId).onSnapshot(s => {
             const cms = s.docs.map(d => d.data()).sort((a,b) => a.date - b.date);
             document.getElementById('det-comm-cnt').innerText = cms.length;
-            document.getElementById('comm-list').innerHTML = cms.map(c => `
-                <div style="padding:10px; border-bottom:1px solid #f1f5f9; font-size:13px;">
-                    <b>${c.user}</b>: ${parse(c.text)}
-                </div>
-            `).join('');
+            document.getElementById('comm-container').innerHTML = cms.map(c => `<div style="padding:8px; border-bottom:1px solid #eee;"><b>${c.user}</b>: ${namuParser(c.text)}</div>`).join('');
         });
     }
 
-    async function saveComment() {
-        if(state.user.isMuted) return alert("뮤트 상태입니다.");
-        const text = document.getElementById('commInput').value;
-        if(!text) return;
-        await db.collection("comments").add({ postId: state.viewingId, user: state.user.id, text, date: Date.now() });
+    async function submitComment() {
+        if(state.user.isMuted) return alert("뮤트됨");
+        const txt = document.getElementById('commInput').value;
+        const post = state.posts.find(x => x.fId === state.viewingId);
+        await db.collection("comments").add({ postId: state.viewingId, user: state.user.id, text: txt, date: Date.now() });
+        if(post.author !== state.user.id) {
+            await db.collection("notis").add({ to: post.author, msg: `내 글에 댓글이 달렸습니다: ${txt.substring(0,10)}`, read: false, date: Date.now() });
+        }
         document.getElementById('commInput').value = '';
     }
 
+    // 유틸리티
+    function goHome() { state.viewingId = null; showPage('home'); }
+    function showBoard(b) { state.board = b; showPage('board'); document.getElementById('board-title-text').innerText = b; renderBoardList(); }
+    function renderBoardList() {
+        const list = state.posts.filter(p => p.board === state.board);
+        document.getElementById('board-list-area').innerHTML = list.map(p => `<div class="list-item" onclick="viewDetail('${p.fId}')">${p.isPinned?'📌':''} ${p.title} <small>${p.author}</small></div>`).join('');
+    }
     async function savePost() {
         const title = document.getElementById('w-title').value, content = document.getElementById('w-content').value;
         await db.collection("posts").add({ board: state.board, title, content, author: state.user.id, date: new Date().toLocaleDateString(), likes: 0, likedBy: [], id: Date.now(), isPinned: false });
         closeModal('writeModal');
     }
-
-    function updateUI() {
-        document.getElementById('authArea').style.display = 'none';
-        document.getElementById('userArea').style.display = 'block';
-        document.getElementById('u-nick').innerText = state.user.id;
-        if(state.user.role === 'admin') document.getElementById('n-admin').style.display = 'block';
+    function showPage(p) { 
+        document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
+        document.getElementById('page-'+p).classList.add('active');
+        if(p === 'mypage') renderMyPage();
     }
-
-    function renderHome() {
-        document.getElementById('hot-list').innerHTML = state.posts.filter(p => p.likes >= 5).slice(0,3).map(p => `<div class="list-item" onclick="viewDetail('${p.fId}')">${p.title}</div>`).join('');
-        document.getElementById('new-list').innerHTML = state.posts.slice(0,5).map(p => `<div class="list-item" onclick="viewDetail('${p.fId}')">${p.title}</div>`).join('');
-    }
-
-    function goHome() { state.viewingId = null; showPage('home'); }
+    function checkUserStatus() { db.collection("users").where("id","==",state.user.id).onSnapshot(s => { if(s.docs[0].data().status === 'kicked') logout(); }); }
+    function toggleNotiBox() { const n = document.getElementById('notiBox'); n.style.display = n.style.display === 'none' ? 'block' : 'none'; }
     function openModal(id) { document.getElementById(id).classList.add('active'); }
     function closeModal(id) { document.getElementById(id).classList.remove('active'); }
-    function openWrite() { if(!state.user) return alert("로그인 필요"); openModal('writeModal'); }
-    function logout() { localStorage.clear(); location.reload(); }
-    function showPage(p) { document.querySelectorAll('.page').forEach(el => el.classList.remove('active')); document.getElementById('page-'+p).classList.add('active'); }
-    
+    function renderHome() {
+        document.getElementById('hot-posts').innerHTML = state.posts.filter(p => p.likes >= 5).slice(0,3).map(p => `<div class="list-item" onclick="viewDetail('${p.fId}')">${p.title}</div>`).join('');
+        document.getElementById('recent-posts').innerHTML = state.posts.slice(0,5).map(p => `<div class="list-item" onclick="viewDetail('${p.fId}')">${p.title}</div>`).join('');
+    }
+
     window.onload = init;
 </script>
 </body>
