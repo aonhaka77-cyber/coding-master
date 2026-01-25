@@ -3,56 +3,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>코딩 마스터 - 파이어베이스 완결판</title>
+    <title>코딩 마스터 </title>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <style>
-        :root { --primary: #667eea; --secondary: #764ba2; --bg: #f8f9fa; --text: #222; --danger: #e74c3c; --accent: #f39c12; --card-bg: #ffffff; }
+        :root { --primary: #4f46e5; --secondary: #7c3aed; --bg: #f3f4f6; --text: #1f2937; --danger: #ef4444; --card: #ffffff; --tag: #dbeafe; --tag-text: #1e40af; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Pretendard', -apple-system, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+        body { font-family: 'Pretendard', sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; }
         
-        header { background: white; border-bottom: 1px solid #e5e5e5; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        .header-top { max-width: 1200px; margin: 0 auto; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; gap: 15px; }
-        .logo { font-size: 22px; font-weight: 900; color: var(--primary); cursor: pointer; letter-spacing: -1px; }
-        .search-bar { flex: 1; max-width: 400px; }
-        .search-bar input { width: 100%; padding: 10px 18px; border-radius: 25px; border: 1px solid #ddd; background: #f1f3f5; outline: none; transition: 0.3s; }
-        .search-bar input:focus { background: white; border-color: var(--primary); }
+        header { background: white; border-bottom: 1px solid #e5e7eb; position: sticky; top: 0; z-index: 1000; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+        .header-top { max-width: 1200px; margin: 0 auto; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; gap: 20px; }
+        .logo { font-size: 26px; font-weight: 900; color: var(--primary); cursor: pointer; letter-spacing: -1.5px; }
+        .search-bar { flex: 1; max-width: 450px; }
+        .search-bar input { width: 100%; padding: 12px 20px; border-radius: 30px; border: 2px solid #f3f4f6; background: #f9fafb; outline: none; transition: 0.2s; }
+        .search-bar input:focus { border-color: var(--primary); background: white; }
 
         .nav-menu { max-width: 1200px; margin: 0 auto; padding: 0 20px; display: flex; gap: 20px; overflow-x: auto; }
-        .nav-item { padding: 15px 5px; cursor: pointer; font-size: 14px; font-weight: 700; color: #777; border-bottom: 3px solid transparent; white-space: nowrap; }
+        .nav-item { padding: 15px 5px; cursor: pointer; font-size: 15px; font-weight: 700; color: #6b7280; border-bottom: 3px solid transparent; white-space: nowrap; }
         .nav-item.active { color: var(--primary); border-bottom-color: var(--primary); }
 
-        .main-container { max-width: 1200px; margin: 25px auto; padding: 0 20px; display: grid; grid-template-columns: 1fr 320px; gap: 25px; }
+        .main-container { max-width: 1200px; margin: 30px auto; padding: 0 20px; display: grid; grid-template-columns: 1fr 300px; gap: 30px; }
         @media (max-width: 950px) { .main-container { grid-template-columns: 1fr; } }
 
-        .page { display: none; min-height: 500px; }
-        .page.active { display: block; animation: fadeIn 0.3s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .page { display: none; }
+        .page.active { display: block; animation: slideUp 0.4s ease; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        .card { background: var(--card-bg); border-radius: 16px; padding: 25px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 25px; }
-        .ad-banner { background: linear-gradient(135deg, #222, #444); color: white; border-radius: 16px; padding: 30px; margin-bottom: 25px; }
-
-        .btn { padding: 11px 22px; border: none; border-radius: 10px; cursor: pointer; font-weight: 700; transition: 0.2s; font-size: 14px; }
+        .card { background: var(--card); border-radius: 20px; padding: 25px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); margin-bottom: 25px; }
+        .btn { padding: 12px 24px; border: none; border-radius: 12px; cursor: pointer; font-weight: 700; transition: 0.2s; font-size: 14px; }
         .btn-p { background: var(--primary); color: white; }
-        .btn-s { background: #f0f2f5; color: #444; }
+        .btn-s { background: #f3f4f6; color: #4b5563; }
         .btn-danger { background: var(--danger); color: white; }
 
-        .item-row { padding: 15px; border-bottom: 1px solid #f5f7f9; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
-        .item-row:hover { background: #fcfdfe; }
+        .item-row { padding: 20px; border-bottom: 1px solid #f3f4f6; display: flex; justify-content: space-between; align-items: center; cursor: pointer; border-radius: 12px; transition: 0.2s; }
+        .item-row:hover { background: #f9fafb; transform: scale(1.01); }
+        
+        .tag { display: inline-block; padding: 3px 12px; background: var(--tag); color: var(--tag-text); border-radius: 20px; font-size: 12px; margin-right: 6px; font-weight: 600; }
+        .comment-item { background: #f9fafb; padding: 15px; border-radius: 15px; margin-top: 10px; font-size: 14px; border: 1px solid #eee; }
 
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+        .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:2000; align-items:center; justify-content:center; backdrop-filter: blur(5px); }
         .modal.active { display: flex; }
-        .modal-content { background: white; width: 90%; max-width: 500px; padding: 35px; border-radius: 20px; }
-        input, textarea { width: 100%; padding: 12px 15px; border: 1px solid #ddd; border-radius: 10px; margin-top: 10px; font-size: 14px; }
+        .modal-content { background:white; padding:40px; border-radius:24px; width:95%; max-width:550px; }
+        input, textarea { width:100%; padding:14px; margin-top:12px; border: 2px solid #f3f4f6; border-radius:12px; outline:none; font-size: 15px; }
+        input:focus, textarea:focus { border-color: var(--primary); }
     </style>
 </head>
 <body>
 
 <header>
     <div class="header-top">
-        <div class="logo" onclick="goHome()">🚀 CODING MASTER</div>
+        <div class="logo" onclick="goHome()">🚀 MASTER PIECE</div>
         <div class="search-bar">
-            <input type="text" id="globalSearch" placeholder="제목 검색 후 엔터" onkeypress="handleSearch(event)">
+            <input type="text" id="globalSearch" placeholder="제목 또는 #태그 검색 후 엔터" onkeypress="handleSearch(event)">
         </div>
         <div id="authArea">
             <button class="btn btn-s" onclick="openModal('loginModal')">로그인</button>
@@ -65,69 +67,94 @@
     </div>
     <nav class="nav-menu">
         <div class="nav-item active" id="menu-home" onclick="goHome()">홈</div>
-        <div class="nav-item" id="menu-notice" onclick="showBoard('notice')">공지사항</div>
-        <div class="nav-item" id="menu-free" onclick="showBoard('free')">자유게시판</div>
-        <div class="nav-item" id="menu-admin" onclick="showPage('admin')" style="display:none; color:var(--danger)">👑 관리콘솔</div>
+        <div class="nav-item" id="menu-notice" onclick="showBoard('notice')">📢 공지사항</div>
+        <div class="nav-item" id="menu-free" onclick="showBoard('free')">💬 자유게시판</div>
+        <div class="nav-item" id="menu-qna" onclick="showBoard('qna')">❓ 질문답변</div>
+        <div class="nav-item" id="menu-news" onclick="showBoard('news')">📰 IT뉴스</div>
+        <div class="nav-item" id="menu-tip" onclick="showBoard('tip')">💡 꿀팁</div>
+        <div class="nav-item" id="menu-inquiry" onclick="showPage('inquiry')">📮 1:1문의</div>
+        <div class="nav-item" id="menu-admin" onclick="showPage('admin')" style="display:none; color:var(--danger)">👑 관리도구</div>
     </nav>
 </header>
 
 <div class="main-container">
     <div class="content-left">
         <div id="page-home" class="page active">
-            <div id="ad-container" class="ad-banner">
-                <h2>로딩 중...</h2>
-                <p>잠시만 기다려 주세요.</p>
+            <div class="card" style="background: linear-gradient(135deg, var(--primary), var(--secondary)); color:white;">
+                <h1>환영합니다, 운영자님!</h1>
+                <p style="opacity:0.9;">오늘도 멋진 커뮤니티를 만들어주세요.</p>
             </div>
             <div class="card">
-                <h3>🆕 최근 게시글</h3>
+                <h3>🔥 실시간 인기글</h3>
                 <div id="home-posts" style="margin-top:15px;"></div>
             </div>
         </div>
 
         <div id="page-board" class="page">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:25px;">
                 <h2 id="board-title">게시판</h2>
-                <button class="btn btn-p" onclick="openWriteModal()">글쓰기</button>
+                <button class="btn btn-p" id="writeBtn" onclick="openWriteModal()">글쓰기</button>
             </div>
-            <div id="post-list" class="card" style="padding:10px;"></div>
+            <div id="post-list" class="card" style="padding:0;"></div>
         </div>
 
         <div id="page-detail" class="page">
             <div class="card">
                 <div id="post-header"></div>
-                <div id="post-body" style="padding:20px 0; border-top:1px solid #eee; margin-top:15px;"></div>
-                <div id="admin-tools" style="display:none; margin-top:20px; padding-top:20px; border-top:1px dashed #eee;">
-                    <button class="btn btn-danger" onclick="deletePost()">게시글 삭제</button>
+                <div id="post-tags" style="margin:10px 0;"></div>
+                <hr style="margin:20px 0; border:0; border-top:1px solid #eee;">
+                <div id="post-body" style="font-size:17px; min-height:100px;"></div>
+                <div style="display:flex; gap:12px; margin-top:30px;">
+                    <button class="btn btn-p" style="background:#fee2e2; color:#ef4444;" onclick="handleLike()">❤️ 좋아요 <span id="like-count">0</span></button>
+                    <div id="admin-tools" style="display:none;">
+                        <button class="btn btn-danger" onclick="deletePost()">삭제하기</button>
+                    </div>
+                </div>
+                <div style="margin-top:40px;">
+                    <h4>댓글 <span id="comment-count" style="color:var(--primary)">0</span></h4>
+                    <div id="comment-list" style="margin:20px 0;"></div>
+                    <div style="display:flex; gap:10px;">
+                        <input type="text" id="commentInp" placeholder="댓글을 남겨보세요.">
+                        <button class="btn btn-p" onclick="saveComment()">등록</button>
+                    </div>
                 </div>
             </div>
-            <button class="btn btn-s" onclick="goBackList()">목록으로 돌아가기</button>
+            <button class="btn btn-s" onclick="goBackList()">목록으로</button>
+        </div>
+
+        <div id="page-inquiry" class="page">
+            <div class="card">
+                <h2>📮 운영자 1:1 문의</h2>
+                <p style="color:#6b7280; margin-bottom:20px;">운영자('계속반복')님께만 전달되는 비밀 메시지입니다.</p>
+                <textarea id="inquiryContent" rows="8" placeholder="문의하실 내용을 입력해주세요."></textarea>
+                <button class="btn btn-p" style="width:100%; margin-top:15px;" onclick="sendInquiry()">문의 접수</button>
+            </div>
         </div>
 
         <div id="page-admin" class="page">
-            <h2>👑 커뮤니티 관리</h2>
             <div class="card">
-                <h3>📢 광고/공지 관리</h3>
-                <input type="text" id="adInpTitle" placeholder="제목">
-                <input type="text" id="adInpText" placeholder="내용">
-                <button class="btn btn-p" style="margin-top:10px; width:100%" onclick="updateAd()">광고 즉시 업데이트</button>
+                <h2>👑 운영 관리 센터</h2>
+                <hr style="margin:20px 0;">
+                <h3>받은 문의 내역</h3>
+                <div id="admin-inquiry-list" style="margin-top:15px;"></div>
             </div>
         </div>
     </div>
 
     <div class="sidebar">
         <div class="card">
-            <h4>📊 통계</h4>
-            <div style="margin-top:10px; font-size:14px;">
-                <div style="display:flex; justify-content:space-between;"><span>전체 글</span><b id="stat-posts">0</b></div>
-                <div style="display:flex; justify-content:space-between;"><span>회원 수</span><b id="stat-users">0</b></div>
+            <h4>📊 현황 데이터</h4>
+            <div style="margin-top:15px; font-size:14px; display:flex; flex-direction:column; gap:8px;">
+                <div style="display:flex; justify-content:space-between;"><span>총 게시글</span><b id="stat-posts">0</b></div>
+                <div style="display:flex; justify-content:space-between;"><span>가입자</span><b id="stat-users">0</b></div>
             </div>
         </div>
     </div>
 </div>
 
-<div class="modal" id="loginModal"><div class="modal-content"><h2>로그인</h2><input type="text" id="loginId" placeholder="아이디"><input type="password" id="loginPw" placeholder="비밀번호"><button class="btn btn-p" style="width:100%; margin-top:20px;" onclick="handleLogin()">로그인</button><button class="btn btn-s" style="width:100%; margin-top:10px;" onclick="closeModal('loginModal')">닫기</button></div></div>
+<div class="modal" id="loginModal"><div class="modal-content"><h2>로그인</h2><input type="text" id="loginId" placeholder="아이디"><input type="password" id="loginPw" placeholder="비밀번호"><button class="btn btn-p" style="width:100%; margin-top:20px;" onclick="handleLogin()">시작하기</button><button class="btn btn-s" style="width:100%; margin-top:10px;" onclick="closeModal('loginModal')">닫기</button></div></div>
 <div class="modal" id="joinModal"><div class="modal-content"><h2>회원가입</h2><input type="text" id="joinId" placeholder="아이디"><input type="password" id="joinPw" placeholder="비밀번호"><button class="btn btn-p" style="width:100%; margin-top:20px;" onclick="handleJoin()">가입 완료</button><button class="btn btn-s" style="width:100%; margin-top:10px;" onclick="closeModal('joinModal')">취소</button></div></div>
-<div class="modal" id="writeModal"><div class="modal-content"><h2>글 작성</h2><input type="text" id="writeTitle" placeholder="제목"><textarea id="writeContent" rows="10" placeholder="내용을 입력하세요"></textarea><input type="file" id="fileInput" onchange="handleFilePreview()"><img id="writeImgPreview" style="display:none; max-width:100%; margin-top:15px; border-radius:10px;"><button class="btn btn-p" style="width:100%; margin-top:20px;" onclick="handleSavePost()">작성 완료</button><button class="btn btn-s" style="width:100%; margin-top:10px;" onclick="closeModal('writeModal')">취소</button></div></div>
+<div class="modal" id="writeModal"><div class="modal-content"><h2>글쓰기</h2><input type="text" id="writeTitle" placeholder="제목"><input type="text" id="writeTags" placeholder="태그 (쉼표로 구분, 예: 자바, 질문, 꿀팁)"><textarea id="writeContent" rows="10" placeholder="내용을 입력하세요."></textarea><input type="file" id="fileInput" onchange="handleFilePreview()"><img id="writeImgPreview" style="display:none; max-width:100%; margin-top:15px; border-radius:15px;"><button class="btn btn-p" style="width:100%; margin-top:20px;" onclick="handleSavePost()">작성 완료</button><button class="btn btn-s" style="width:100%; margin-top:10px;" onclick="closeModal('writeModal')">취소</button></div></div>
 
 <script>
     // 1. Firebase 설정
@@ -149,200 +176,238 @@
         viewingPostId: null, tempImg: null
     };
 
-    // 3. 초기화 (실시간 데이터 연결)
+    // 3. 앱 구동 및 리스너
     function init() {
-        // 유저 감시
         fdb.collection("users").onSnapshot(s => {
-            db.users = s.docs.map(d => ({fId: d.id, ...d.data()}));
+            db.users = s.docs.map(d => d.data());
             document.getElementById('stat-users').innerText = db.users.length;
         });
 
-        // 게시글 감시
         fdb.collection("posts").orderBy("id", "desc").onSnapshot(s => {
             db.posts = s.docs.map(d => ({fId: d.id, ...d.data()}));
             renderHome();
             renderPostList();
-            if(document.getElementById('page-detail').classList.contains('active')) {
-                const p = db.posts.find(x => x.id === db.viewingPostId);
-                if(p) renderDetail(p);
-            }
             document.getElementById('stat-posts').innerText = db.posts.length;
         });
 
-        // 광고 감시
-        fdb.collection("ads").orderBy("timestamp", "desc").limit(1).onSnapshot(s => {
-            if(!s.empty) {
-                const ad = s.docs[0].data();
-                document.getElementById('ad-container').innerHTML = `<h2>${ad.title}</h2><p>${ad.text}</p>`;
-            }
+        fdb.collection("inquiries").orderBy("date", "desc").onSnapshot(s => {
+            const list = s.docs.map(d => d.data());
+            document.getElementById('admin-inquiry-list').innerHTML = list.map(i => `
+                <div class="comment-item"><b>${i.user}님의 문의</b> (${i.date})<br>${i.content}</div>
+            `).join('') || '접수된 문의사항이 없습니다.';
         });
     }
 
-    // 4. 페이지/보드 제어
-    function showPage(pageId) {
+    // 4. 내비게이션
+    function showPage(id) {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        document.getElementById('page-' + pageId).classList.add('active');
+        document.getElementById('page-' + id).classList.add('active');
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     }
 
-    function goHome() { 
-        showPage('home'); 
-        document.getElementById('menu-home').classList.add('active');
-    }
+    function goHome() { showPage('home'); document.getElementById('menu-home').classList.add('active'); }
 
     function showBoard(boardId) {
         db.currentBoard = boardId;
         showPage('board');
-        const titles = { notice:'📢 공지사항', free:'💬 자유게시판', search:'🔍 검색결과' };
-        document.getElementById('board-title').innerText = titles[boardId] || '게시판';
         document.getElementById('menu-' + (boardId === 'search' ? 'free' : boardId)).classList.add('active');
+        const labels = { notice:'📢 공지사항', free:'💬 자유게시판', qna:'❓ 질문답변', news:'📰 IT뉴스', tip:'💡 꿀팁', search:'🔍 검색결과' };
+        document.getElementById('board-title').innerText = labels[boardId];
         renderPostList();
     }
 
-    // 5. 렌더링 함수
-    function renderHome() {
-        const recent = db.posts.slice(0, 5);
-        document.getElementById('home-posts').innerHTML = recent.map(p => `
-            <div class="item-row" onclick="viewPost(${p.id})">
-                <span>${p.title}</span><small>${p.author}</small>
-            </div>
-        `).join('') || '글이 없습니다.';
-    }
+    // 5. 로그인 (마스터 계정: 계속반복 / akdhs)
+    async function handleLogin() {
+        const id = document.getElementById('loginId').value.trim();
+        const pw = document.getElementById('loginPw').value.trim();
 
-    function renderPostList() {
-        let data = db.posts;
-        if(db.currentBoard !== 'search') {
-            data = data.filter(p => p.board === db.currentBoard);
+        // 운영자 계정 특수 체크
+        if(id === '계속반복' && pw === 'akdhs') {
+            db.currentUser = { id: '계속반복', role: 'owner' };
+            completeLogin('계속반복(마스터)');
+            return;
         }
-        document.getElementById('post-list').innerHTML = data.map(p => `
-            <div class="item-row" onclick="viewPost(${p.id})">
-                <div><b>${p.title}</b><br><small>${p.author} | ${p.date}</small></div>
-                <div style="color:var(--primary)">👁️ ${p.views || 0}</div>
-            </div>
-        `).join('') || '<p style="text-align:center; padding:20px;">글이 없습니다.</p>';
+
+        const user = db.users.find(u => u.id === id && u.pw === pw);
+        if(user) {
+            db.currentUser = user;
+            completeLogin(id);
+        } else { alert('로그인 정보를 확인해주세요.'); }
     }
 
-    // 6. 로그인/회원가입 (버그 수정 완료)
+    function completeLogin(name) {
+        updateAuthUI();
+        closeModal('loginModal');
+        alert(name + '님 반갑습니다!');
+    }
+
     async function handleJoin() {
         const id = document.getElementById('joinId').value.trim();
         const pw = document.getElementById('joinPw').value.trim();
-        if(!id || !pw) return alert('입력창을 채워주세요.');
-
+        if(!id || !pw) return alert('모두 입력하세요.');
+        if(id === '계속반복') return alert('사용할 수 없는 아이디입니다.');
+        
         const check = await fdb.collection("users").where("id", "==", id).get();
-        if(!check.empty) return alert('이미 사용 중인 아이디입니다.');
+        if(!check.empty) return alert('이미 가입된 아이디입니다.');
 
         await fdb.collection("users").add({ id, pw, role: 'member' });
-        alert('가입되었습니다! 로그인해 주세요.');
+        alert('가입 완료! 로그인을 진행해주세요.');
         closeModal('joinModal');
     }
 
-    function handleLogin() {
-        const id = document.getElementById('loginId').value.trim();
-        const pw = document.getElementById('loginPw').value.trim();
-        const user = db.users.find(u => u.id === id && u.pw === pw);
-
-        if(user) {
-            db.currentUser = user;
-            updateAuthUI();
-            closeModal('loginModal');
-            alert(id + '님 환영합니다!');
-        } else {
-            alert('정보가 일치하지 않습니다.');
-        }
-    }
+    function logout() { db.currentUser = null; updateAuthUI(); goHome(); }
 
     function updateAuthUI() {
         const isLogin = !!db.currentUser;
         document.getElementById('authArea').style.display = isLogin ? 'none' : 'flex';
         document.getElementById('userArea').style.display = isLogin ? 'flex' : 'none';
         if(isLogin) {
-            document.getElementById('welcomeMsg').innerText = db.currentUser.id + '님';
+            document.getElementById('welcomeMsg').innerText = db.currentUser.id;
             document.getElementById('menu-admin').style.display = (db.currentUser.role === 'owner') ? 'block' : 'none';
         }
     }
 
-    function logout() { db.currentUser = null; updateAuthUI(); goHome(); }
-
-    // 7. 게시글 상세 및 삭제
-    function viewPost(id) {
-        const post = db.posts.find(p => p.id === id);
-        if(!post) return;
-        db.viewingPostId = id;
-        showPage('detail');
-        renderDetail(post);
-        fdb.collection("posts").doc(post.fId).update({ views: (post.views || 0) + 1 });
+    // 6. 게시글 CRUD
+    function createPostHtml(p) {
+        const tags = (p.tags || []).map(t => `<span class="tag">#${t}</span>`).join('');
+        return `
+            <div class="item-row" onclick="viewPost('${p.fId}')">
+                <div>
+                    <span style="font-weight:800; font-size:16px;">${p.title}</span><br>
+                    <div style="margin:6px 0;">${tags}</div>
+                    <small style="color:#9ca3af;">${p.author} | ${p.date}</small>
+                </div>
+                <div style="text-align:right;">
+                    <b style="color:var(--danger)">❤️ ${p.likes || 0}</b><br>
+                    <small style="color:#d1d5db">👁️ ${p.views || 0}</small>
+                </div>
+            </div>`;
     }
 
-    function renderDetail(post) {
-        document.getElementById('post-header').innerHTML = `<h2>${post.title}</h2><small>${post.author} | ${post.date} | 조회 ${post.views}</small>`;
-        let html = `<p style="white-space:pre-wrap;">${post.content}</p>`;
-        if(post.file) html += `<img src="${post.file}" style="max-width:100%; margin-top:20px; border-radius:10px;">`;
-        document.getElementById('post-body').innerHTML = html;
-
-        const canDelete = db.currentUser && (db.currentUser.role === 'owner' || db.currentUser.id === post.author);
-        document.getElementById('admin-tools').style.display = canDelete ? 'block' : 'none';
+    function renderPostList() {
+        if(db.currentBoard === 'search') return;
+        const filtered = db.posts.filter(p => p.board === db.currentBoard);
+        document.getElementById('post-list').innerHTML = filtered.map(p => createPostHtml(p)).join('') || '<p style="padding:40px; text-align:center; color:#999;">작성된 글이 없습니다.</p>';
     }
 
-    function handleSavePost() {
+    function renderHome() {
+        const hot = [...db.posts].sort((a,b) => (b.likes || 0) - (a.likes || 0)).slice(0, 5);
+        document.getElementById('home-posts').innerHTML = hot.map(p => createPostHtml(p)).join('');
+    }
+
+    function openWriteModal() {
+        if(!db.currentUser) return alert('로그인이 필요합니다.');
+        // 공지사항은 '계속반복' 전용
+        if(db.currentBoard === 'notice' && db.currentUser.id !== '계속반복') {
+            return alert('공지사항은 운영자(계속반복)님만 작성할 수 있습니다.');
+        }
+        openModal('writeModal');
+    }
+
+    async function handleSavePost() {
         const title = document.getElementById('writeTitle').value.trim();
         const content = document.getElementById('writeContent').value.trim();
-        if(!title || !content) return alert('내용을 입력하세요.');
+        const tagInput = document.getElementById('writeTags').value.trim();
+        if(!title || !content) return alert('내용을 채워주세요.');
 
-        const newPost = {
+        const tags = tagInput ? tagInput.split(',').map(t => t.trim()) : [];
+        const postData = {
             id: Date.now(),
             board: db.currentBoard === 'search' ? 'free' : db.currentBoard,
-            title, content, author: db.currentUser.id,
+            title, content, tags,
+            author: db.currentUser.id,
             date: new Date().toLocaleDateString(),
-            views: 0, file: db.tempImg
+            views: 0, likes: 0, file: db.tempImg
         };
 
-        fdb.collection("posts").add(newPost).then(() => {
-            closeModal('writeModal');
-            document.getElementById('writeTitle').value = '';
-            document.getElementById('writeContent').value = '';
-            document.getElementById('writeImgPreview').style.display = 'none';
-            db.tempImg = null;
-        });
+        await fdb.collection("posts").add(postData);
+        closeModal('writeModal');
+        // 초기화
+        document.getElementById('writeTitle').value = '';
+        document.getElementById('writeContent').value = '';
+        document.getElementById('writeTags').value = '';
+        db.tempImg = null;
+    }
+
+    // 7. 상세 보기 & 좋아요 & 댓글
+    function viewPost(fId) {
+        const post = db.posts.find(p => p.fId === fId);
+        if(!post) return;
+        db.viewingPostId = fId;
+        showPage('detail');
+        
+        document.getElementById('post-header').innerHTML = `<h1>${post.title}</h1><p style="color:#888; margin-top:5px;">${post.author} | ${post.date} | 조회수 ${post.views || 0}</p>`;
+        document.getElementById('post-tags').innerHTML = (post.tags || []).map(t => `<span class="tag">#${t}</span>`).join('');
+        document.getElementById('post-body').innerHTML = `<p style="white-space:pre-wrap;">${post.content}</p>` + (post.file ? `<img src="${post.file}" style="max-width:100%; margin-top:20px; border-radius:15px;">` : '');
+        document.getElementById('like-count').innerText = post.likes || 0;
+        
+        // 운영자이거나 본인이면 삭제 버튼
+        const isMaster = db.currentUser && (db.currentUser.id === '계속반복' || db.currentUser.id === post.author);
+        document.getElementById('admin-tools').style.display = isMaster ? 'block' : 'none';
+
+        fdb.collection("posts").doc(fId).update({ views: (post.views || 0) + 1 });
+        loadComments(fId);
+    }
+
+    async function handleLike() {
+        if(!db.currentUser) return alert('좋아요는 로그인 후 가능합니다.');
+        const post = db.posts.find(p => p.fId === db.viewingPostId);
+        await fdb.collection("posts").doc(db.viewingPostId).update({ likes: (post.likes || 0) + 1 });
+        document.getElementById('like-count').innerText = (post.likes || 0) + 1;
+    }
+
+    async function saveComment() {
+        if(!db.currentUser) return alert('댓글은 로그인 후 작성 가능합니다.');
+        const content = document.getElementById('commentInp').value.trim();
+        if(!content) return;
+        await fdb.collection("comments").add({ postId: db.viewingPostId, user: db.currentUser.id, content, date: new Date().toLocaleString() });
+        document.getElementById('commentInp').value = '';
+        loadComments(db.viewingPostId);
+    }
+
+    async function loadComments(postId) {
+        const s = await fdb.collection("comments").where("postId", "==", postId).get();
+        const list = s.docs.map(d => d.data());
+        document.getElementById('comment-count').innerText = list.length;
+        document.getElementById('comment-list').innerHTML = list.map(c => `<div class="comment-item"><b>${c.user}</b> <small style="float:right; color:#bbb;">${c.date}</small><br>${c.content}</div>`).join('');
     }
 
     function deletePost() {
-        if(!confirm('정말 삭제하시겠습니까?')) return;
-        const post = db.posts.find(p => p.id === db.viewingPostId);
-        fdb.collection("posts").doc(post.fId).delete().then(() => showBoard(db.currentBoard));
+        if(confirm('정말 삭제할까요?')) fdb.collection("posts").doc(db.viewingPostId).delete().then(() => showBoard(db.currentBoard));
     }
 
-    // 8. 기타 유틸리티 (검색, 광고, 모달)
+    // 8. 기타 기능 (검색, 문의)
     function handleSearch(e) {
         if(e.key === 'Enter') {
-            const query = e.target.value.toLowerCase();
+            const query = e.target.value.toLowerCase().trim();
             if(!query) return;
-            db.posts = db.posts.filter(p => p.title.toLowerCase().includes(query));
+            const res = db.posts.filter(p => p.title.toLowerCase().includes(query) || (p.tags && p.tags.some(t => t.toLowerCase().includes(query))));
+            db.currentBoard = 'search';
             showBoard('search');
+            document.getElementById('post-list').innerHTML = res.map(p => createPostHtml(p)).join('') || '<p style="padding:40px; text-align:center;">검색 결과가 없습니다.</p>';
             e.target.value = '';
         }
     }
 
-    function updateAd() {
-        const title = document.getElementById('adInpTitle').value;
-        const text = document.getElementById('adInpText').value;
-        fdb.collection("ads").add({ title, text, timestamp: Date.now() });
-        alert('광고가 업데이트되었습니다.');
+    async function sendInquiry() {
+        if(!db.currentUser) return alert('로그인 후 이용 가능합니다.');
+        const content = document.getElementById('inquiryContent').value.trim();
+        if(!content) return;
+        await fdb.collection("inquiries").add({ user: db.currentUser.id, content, date: new Date().toLocaleString() });
+        alert('문의가 운영자님께 전달되었습니다.');
+        document.getElementById('inquiryContent').value = '';
+        goHome();
     }
 
     function handleFilePreview() {
         const file = document.getElementById('fileInput').files[0];
         const reader = new FileReader();
-        reader.onloadend = () => {
-            db.tempImg = reader.result;
-            document.getElementById('writeImgPreview').src = reader.result;
-            document.getElementById('writeImgPreview').style.display = 'block';
-        };
+        reader.onloadend = () => { db.tempImg = reader.result; document.getElementById('writeImgPreview').src = reader.result; document.getElementById('writeImgPreview').style.display = 'block'; };
         if(file) reader.readAsDataURL(file);
     }
 
     function openModal(id) { document.getElementById(id).classList.add('active'); }
     function closeModal(id) { document.getElementById(id).classList.remove('active'); }
-    function openWriteModal() { if(!db.currentUser) return alert('로그인 후 이용 가능합니다.'); openModal('writeModal'); }
     function goBackList() { showBoard(db.currentBoard); }
 
     window.onload = init;
