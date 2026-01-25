@@ -3,38 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>코딩 마스터 - 데이터베이스 에디션</title>
+    <title>코딩 마스터 - 파이어베이스 풀 에디션</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <style>
-        /* --- 디자인 시스템 (기존 유지) --- */
+        /* --- 디자인 시스템 --- */
         :root { --primary: #667eea; --secondary: #764ba2; --bg: #f8f9fa; --text: #222; --danger: #e74c3c; --accent: #f39c12; --card-bg: #ffffff; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; overflow-y: scroll; }
+        body { font-family: 'Pretendard', -apple-system, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; overflow-y: scroll; }
+        
         header { background: white; border-bottom: 1px solid #e5e5e5; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
         .header-top { max-width: 1200px; margin: 0 auto; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; gap: 15px; }
         .logo { font-size: 22px; font-weight: 900; color: var(--primary); cursor: pointer; letter-spacing: -1px; }
         .search-bar { flex: 1; max-width: 400px; }
         .search-bar input { width: 100%; padding: 10px 18px; border-radius: 25px; border: 1px solid #ddd; background: #f1f3f5; font-size: 14px; transition: 0.3s; }
+        .search-bar input:focus { background: white; border-color: var(--primary); outline: none; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2); }
+
         .nav-menu { max-width: 1200px; margin: 0 auto; padding: 0 20px; display: flex; gap: 25px; overflow-x: auto; }
-        .nav-item { padding: 15px 5px; cursor: pointer; font-size: 14px; font-weight: 700; color: #777; border-bottom: 3px solid transparent; white-space: nowrap; }
+        .nav-item { padding: 15px 5px; cursor: pointer; font-size: 14px; font-weight: 700; color: #777; border-bottom: 3px solid transparent; white-space: nowrap; transition: 0.2s; }
+        .nav-item:hover { color: var(--primary); }
         .nav-item.active { color: var(--primary); border-bottom-color: var(--primary); }
+
         .main-container { max-width: 1200px; margin: 25px auto; padding: 0 20px; display: grid; grid-template-columns: 1fr 320px; gap: 25px; }
         @media (max-width: 950px) { .main-container { grid-template-columns: 1fr; } }
+
         .page { display: none; min-height: 600px; }
         .page.active { display: block; animation: fadeIn 0.4s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
         .card { background: var(--card-bg); border-radius: 16px; padding: 25px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 25px; border: 1px solid #eee; }
         .ad-banner { background: linear-gradient(135deg, #222, #444); color: white; border-radius: 16px; padding: 40px; margin-bottom: 25px; }
-        .btn { padding: 11px 22px; border: none; border-radius: 10px; cursor: pointer; font-weight: 700; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; }
+
+        .btn { padding: 11px 22px; border: none; border-radius: 10px; cursor: pointer; font-weight: 700; font-size: 14px; transition: 0.2s; display: inline-flex; align-items: center; justify-content: center; }
         .btn-p { background: var(--primary); color: white; }
         .btn-s { background: #f0f2f5; color: #444; }
         .btn-danger { background: var(--danger); color: white; }
-        .item-row { padding: 15px; border-bottom: 1px solid #f5f7f9; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+
+        .post-body { font-size: 16px; line-height: 1.8; color: #333; padding: 20px 0; border-top: 1px solid #f0f0f0; }
+        .item-row { padding: 15px; border-bottom: 1px solid #f5f7f9; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: 0.2s; }
+        .item-row:hover { background: #fcfdfe; }
+
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
         .modal.active { display: flex; }
         .modal-content { background: white; width: 90%; max-width: 550px; padding: 35px; border-radius: 20px; }
-        input, textarea { width: 100%; padding: 12px 15px; border: 1px solid #ddd; border-radius: 10px; margin-top: 8px; }
+        input, textarea { width: 100%; padding: 12px 15px; border: 1px solid #ddd; border-radius: 10px; margin-top: 8px; font-size: 14px; }
+
+        .home-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media (max-width: 650px) { .home-grid { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
@@ -42,17 +57,19 @@
 <header>
     <div class="header-top">
         <div class="logo" onclick="goHome()">🚀 CODING MASTER</div>
-        <div class="search-bar"><input type="text" id="globalSearch" placeholder="검색 후 엔터를 누르세요..." onkeypress="if(event.keyCode==13) handleSearch()"></div>
+        <div class="search-bar">
+            <input type="text" id="globalSearch" placeholder="제목 또는 내용 검색..." onkeypress="handleSearch(event)">
+        </div>
         <div id="authArea">
             <button class="btn btn-s" onclick="openModal('loginModal')">로그인</button>
             <button class="btn btn-p" onclick="openModal('joinModal')">회원가입</button>
         </div>
         <div id="userArea" style="display:none; align-items:center; gap:12px;">
-            <span id="welcomeMsg" style="font-weight:800; color:var(--primary);"></span>
+            <span id="welcomeMsg" style="font-weight:800; font-size:14px; color:var(--primary);"></span>
             <button class="btn btn-s" onclick="logout()">로그아웃</button>
         </div>
     </div>
-    <nav class="nav-menu">
+    <nav class="nav-menu" id="mainNav">
         <div class="nav-item active" id="menu-home" onclick="goHome()">홈</div>
         <div class="nav-item" id="menu-notice" onclick="showBoard('notice')">공지사항</div>
         <div class="nav-item" id="menu-free" onclick="showBoard('free')">자유게시판</div>
@@ -65,35 +82,44 @@
     <div class="content-left">
         <div id="page-home" class="page active">
             <div id="ad-container" class="ad-banner"></div>
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
-                <div class="card"><h3>📢 최근 공지</h3><div id="home-notice-list"></div></div>
-                <div class="card"><h3>⭐ 운영진 픽</h3><div id="home-pick-list"></div></div>
+            <div class="home-grid">
+                <div class="card">
+                    <h3>📢 최근 공지</h3>
+                    <div id="home-notice-list" style="margin-top:15px;"></div>
+                </div>
+                <div class="card">
+                    <h3 style="color:var(--accent);">⭐ 운영진 픽</h3>
+                    <div id="home-pick-list" style="margin-top:15px;"></div>
+                </div>
             </div>
-            <div class="card"><h3>🆕 최근 올라온 글</h3><div id="home-free-list"></div></div>
+            <div class="card">
+                <h3>🆕 최신 글</h3>
+                <div id="home-free-list" style="margin-top:15px;"></div>
+            </div>
         </div>
 
         <div id="page-board" class="page">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
                 <h2 id="board-title">게시판</h2>
-                <button class="btn btn-p" onclick="openWriteModal()">글쓰기</button>
+                <button class="btn btn-p" id="writeBtn" onclick="openWriteModal()">글쓰기</button>
             </div>
-            <div id="post-list" class="card"></div>
+            <div id="post-list" class="card" style="padding:10px;"></div>
         </div>
 
         <div id="page-detail" class="page">
             <div class="card">
                 <div id="post-header"></div>
-                <div id="post-body" style="padding:20px 0; border-top:1px solid #eee;"></div>
-                <div id="admin-tools" style="display:none; gap:10px; margin-top:20px;">
-                    <button class="btn btn-s" onclick="togglePick()">⭐ 추천 토글</button>
-                    <button class="btn btn-danger" onclick="deletePost()">🗑️ 삭제</button>
+                <div id="post-body" class="post-body"></div>
+                <div id="admin-tools" style="display:none; margin-top:25px; padding-top:20px; border-top:2px dashed #eee; gap:10px;">
+                    <button class="btn btn-s" onclick="togglePick()">추천글 토글</button>
+                    <button class="btn btn-danger" onclick="deletePost()">삭제</button>
                 </div>
             </div>
             <div class="card">
                 <h4>댓글 <span id="cmt-count" style="color:var(--primary);">0</span></h4>
                 <div id="comment-list" style="margin:20px 0;"></div>
                 <div style="display:flex; gap:10px;">
-                    <input type="text" id="comment-input" placeholder="댓글 내용을 입력하세요...">
+                    <input type="text" id="comment-input" placeholder="댓글을 입력하세요...">
                     <button class="btn btn-p" onclick="addComment()">등록</button>
                 </div>
             </div>
@@ -101,11 +127,16 @@
         </div>
 
         <div id="page-admin" class="page">
-            <h2>👑 관리자 센터</h2>
+            <h2>👑 관리 센터</h2>
             <div class="card">
-                <h3>📢 배너 관리</h3>
-                <input type="text" id="adInpTitle" placeholder="제목"><input type="text" id="adInpText" placeholder="내용">
-                <button class="btn btn-p" onclick="addAd()" style="margin-top:10px;">광고 업데이트</button>
+                <h3>📢 광고 관리</h3>
+                <input type="text" id="adInpTitle" placeholder="광고 제목">
+                <input type="text" id="adInpText" placeholder="광고 문구">
+                <button class="btn btn-p" style="margin-top:10px; width:100%" onclick="addAd()">광고 등록</button>
+            </div>
+            <div class="card">
+                <h3>👤 회원 목록</h3>
+                <div id="admin-user-list"></div>
             </div>
         </div>
     </div>
@@ -113,17 +144,20 @@
     <div class="sidebar">
         <div class="card">
             <h4>📈 통계</h4>
-            <p>전체 게시글: <b id="stat-posts">0</b></p>
+            <div style="font-size:14px; margin-top:10px;">
+                <p>게시글: <b id="stat-posts">0</b></p>
+                <p>회원수: <b id="stat-users">0</b></p>
+            </div>
         </div>
     </div>
 </div>
 
-<div class="modal" id="loginModal"><div class="modal-content"><h2>로그인</h2><input type="text" id="loginId" placeholder="닉네임"><input type="password" id="loginPw" placeholder="비밀번호"><button class="btn btn-p" style="width:100%; margin-top:20px;" onclick="handleLogin()">시작</button><button class="btn btn-s" style="width:100%; margin-top:10px;" onclick="closeModal('loginModal')">닫기</button></div></div>
-<div class="modal" id="joinModal"><div class="modal-content"><h2>회원가입</h2><input type="text" id="joinId" placeholder="닉네임"><input type="password" id="joinPw" placeholder="비밀번호"><button class="btn btn-p" style="width:100%; margin-top:20px;" onclick="handleJoin()">가입</button><button class="btn btn-s" style="width:100%; margin-top:10px;" onclick="closeModal('joinModal')">닫기</button></div></div>
-<div class="modal" id="writeModal"><div class="modal-content" style="max-width:700px;"><h2>글 작성</h2><input type="text" id="writeTitle" placeholder="제목"><textarea id="writeContent" style="height:300px;" placeholder="내용"></textarea><input type="file" onchange="handleFilePreview()" id="fileInput"><img id="writeImgPreview" style="display:none; max-width:100%; margin-top:10px;"><button class="btn btn-p" style="width:100%; margin-top:20px;" onclick="handleSavePost()">등록</button></div></div>
+<div class="modal" id="loginModal"><div class="modal-content"><h2>로그인</h2><input type="text" id="loginId" placeholder="닉네임"><input type="password" id="loginPw" placeholder="비밀번호"><button class="btn btn-p" style="width:100%; margin-top:20px;" onclick="handleLogin()">로그인</button><button class="btn btn-s" style="width:100%; margin-top:10px;" onclick="closeModal('loginModal')">취소</button></div></div>
+<div class="modal" id="joinModal"><div class="modal-content"><h2>회원가입</h2><input type="text" id="joinId" placeholder="닉네임"><input type="password" id="joinPw" placeholder="비밀번호"><button class="btn btn-p" style="width:100%; margin-top:20px;" onclick="handleJoin()">가입하기</button><button class="btn btn-s" style="width:100%; margin-top:10px;" onclick="closeModal('joinModal')">취소</button></div></div>
+<div class="modal" id="writeModal"><div class="modal-content" style="max-width:700px;"><h2>글 작성</h2><input type="text" id="writeTitle" placeholder="제목"><textarea id="writeContent" style="height:300px;" placeholder="내용..."></textarea><input type="file" id="fileInput" onchange="handleFilePreview()"><img id="writeImgPreview" style="display:none; max-width:100%; margin-top:15px; border-radius:12px;"><button class="btn btn-p" style="width:100%; margin-top:20px;" onclick="handleSavePost()">작성 완료</button><button class="btn btn-s" style="width:100%; margin-top:10px;" onclick="closeModal('writeModal')">취소</button></div></div>
 
 <script>
-    // 1. Firebase 설정 (제공해주신 API 키 적용)
+    // 1. Firebase 설정 (제공해주신 설정 유지)
     const firebaseConfig = {
         apiKey: "AIzaSyBcxvsiEOyL1lZGVr1UE2gzzZ7HQX5YfbI",
         authDomain: "code-78890.firebaseapp.com",
@@ -132,222 +166,292 @@
         messagingSenderId: "30317586652",
         appId: "1:30317586652:web:d1e6fa39c319029fb7ac19"
     };
+
     firebase.initializeApp(firebaseConfig);
     const fdb = firebase.firestore();
 
-    // 2. 상태 관리
-    let state = {
+    // 2. 상태 관리 객체
+    let db = {
+        users: [],
         posts: [],
-        currentUser: JSON.parse(localStorage.getItem('cm_user')) || null,
-        currentBoard: 'home',
+        comments: [],
+        ads: [],
+        currentBoard: 'free',
+        currentUser: null,
         viewingPostId: null,
-        tempImg: null
+        lastBoard: 'free',
+        searchQuery: ''
     };
 
     // 3. 초기화 및 실시간 리스너
     function init() {
-        updateAuthUI();
-        
+        // 유저 실시간 감시
+        fdb.collection("users").onSnapshot(s => {
+            db.users = s.docs.map(d => ({fId: d.id, ...d.data()}));
+            updateStats();
+            renderAdminUsers();
+        });
+
+        // 광고 실시간 감시
+        fdb.collection("ads").orderBy("timestamp", "desc").limit(1).onSnapshot(s => {
+            db.ads = s.docs.map(d => d.data());
+            renderHome();
+        });
+
         // 게시글 실시간 감시
-        fdb.collection("posts").orderBy("createdAt", "desc").onSnapshot((snapshot) => {
-            state.posts = snapshot.docs.map(doc => ({ firebaseId: doc.id, ...doc.data() }));
-            refreshCurrentUI();
+        fdb.collection("posts").orderBy("id", "desc").onSnapshot(s => {
+            db.posts = s.docs.map(d => ({fId: d.id, ...d.data()}));
+            renderHome();
+            if(isPageActive('board')) renderPostList();
+            if(isPageActive('detail')) {
+                const p = db.posts.find(x => x.id === db.viewingPostId);
+                if(p) renderDetail(p);
+            }
             updateStats();
         });
 
-        // 광고 실시간 감시 (DB 저장 방식)
-        fdb.collection("settings").doc("ads").onSnapshot((doc) => {
-            if(doc.exists()) {
-                const data = doc.data();
-                document.getElementById('ad-container').innerHTML = `<h2>${data.title}</h2><p>${data.text}</p>`;
-            }
+        // 댓글 실시간 감시
+        fdb.collection("comments").onSnapshot(s => {
+            db.comments = s.docs.map(d => d.data());
+            if(isPageActive('detail')) renderComments();
         });
+
+        goHome();
     }
 
-    function refreshCurrentUI() {
-        if (state.currentBoard === 'home') renderHome();
-        else renderPostList();
-        
-        if (state.viewingPostId) {
-            const post = state.posts.find(p => p.id === state.viewingPostId);
-            if(post) renderDetail(post);
-        }
-    }
-
-    // 4. 게시판 로직
+    // 4. 네비게이션 및 검색
     function showPage(pageId) {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         document.getElementById('page-' + pageId).classList.add('active');
-        state.currentBoard = pageId;
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        const menu = document.getElementById('menu-' + pageId);
+        if(menu) menu.classList.add('active');
     }
 
-    function goHome() { showPage('home'); renderHome(); }
-
+    function isPageActive(id) { return document.getElementById('page-'+id).classList.contains('active'); }
+    function goHome() { showPage('home'); }
     function showBoard(boardId) {
-        state.currentBoard = boardId;
+        db.currentBoard = boardId;
+        db.lastBoard = boardId;
+        db.searchQuery = '';
         showPage('board');
-        document.getElementById('board-title').innerText = boardId.toUpperCase();
+        const titles = { notice:'📢 공지사항', free:'💬 자유게시판', album:'🖼️ 갤러리', search:'🔍 검색결과' };
+        document.getElementById('board-title').innerText = titles[boardId] || '게시판';
         renderPostList();
     }
 
-    function renderHome() {
-        const notices = state.posts.filter(p => p.board === 'notice').slice(0, 5);
-        const picks = state.posts.filter(p => p.isPick).slice(0, 5);
-        const frees = state.posts.filter(p => p.board === 'free').slice(0, 5);
+    function handleSearch(e) {
+        if (e.key === 'Enter') {
+            const val = e.target.value.trim();
+            if(!val) return;
+            db.searchQuery = val.toLowerCase();
+            showBoard('search');
+            e.target.value = '';
+        }
+    }
 
-        const mapper = p => `<div class="item-row" onclick="viewPost(${p.id})"><span>${p.title}</span><small>${p.author}</small></div>`;
-        document.getElementById('home-notice-list').innerHTML = notices.map(mapper).join('') || '없음';
-        document.getElementById('home-pick-list').innerHTML = picks.map(mapper).join('') || '없음';
-        document.getElementById('home-free-list').innerHTML = frees.map(mapper).join('') || '없음';
+    // 5. 렌더링 함수들
+    function renderHome() {
+        const notices = db.posts.filter(p => p.board === 'notice').slice(0, 5);
+        document.getElementById('home-notice-list').innerHTML = notices.map(p => `<div class="item-row" onclick="viewPost(${p.id})"><span>${p.title}</span><small>${p.date.split(',')[0]}</small></div>`).join('') || '공지 없음';
+        
+        const picks = db.posts.filter(p => p.isPick).slice(0, 5);
+        document.getElementById('home-pick-list').innerHTML = picks.map(p => `<div class="item-row" onclick="viewPost(${p.id})"><span>${p.title}</span><small>${p.author}</small></div>`).join('') || '추천글 없음';
+
+        const frees = db.posts.filter(p => p.board === 'free').slice(0, 5);
+        document.getElementById('home-free-list').innerHTML = frees.map(p => `<div class="item-row" onclick="viewPost(${p.id})"><span>${p.title}</span><small>${p.author}</small></div>`).join('') || '글 없음';
+
+        if(db.ads.length > 0) {
+            document.getElementById('ad-container').innerHTML = `<h2>${db.ads[0].title}</h2><p>${db.ads[0].text}</p>`;
+        }
     }
 
     function renderPostList() {
-        const list = state.posts.filter(p => p.board === state.currentBoard);
-        document.getElementById('post-list').innerHTML = list.map(p => `
+        let data = db.posts;
+        if(db.currentBoard === 'search') {
+            data = data.filter(p => p.title.toLowerCase().includes(db.searchQuery) || p.content.toLowerCase().includes(db.searchQuery));
+        } else {
+            data = data.filter(p => p.board === db.currentBoard);
+        }
+
+        document.getElementById('post-list').innerHTML = data.map(p => `
             <div class="item-row" onclick="viewPost(${p.id})">
-                <div><b>${p.isPick?'⭐ ':''}${p.title}</b><br><small>${p.author} | ${p.date}</small></div>
-                <div>👁️ ${p.views || 0}</div>
-            </div>
-        `).join('') || '게시글이 없습니다.';
+                <div>
+                    <div style="font-weight:700;">${p.isPick?'⭐ ':''}${p.title} ${p.file?'📎':''}</div>
+                    <div style="font-size:12px; color:#999;">${p.author} | ${p.date}</div>
+                </div>
+                <div style="color:#aaa; font-size:12px;">👁️ ${p.views || 0}</div>
+            </div>`).join('') || '<p style="padding:40px; text-align:center;">게시글이 없습니다.</p>';
     }
 
-    // 5. 글 상세 및 작성
-    async function viewPost(id) {
-        const post = state.posts.find(p => p.id === id);
+    // 6. 게시글 상세 및 액션
+    function viewPost(id) {
+        const post = db.posts.find(p => p.id === id);
         if(!post) return;
-        state.viewingPostId = id;
+        db.viewingPostId = id;
         showPage('detail');
-        fdb.collection("posts").doc(post.firebaseId).update({ views: (post.views || 0) + 1 });
-        renderDetail(post);
+        fdb.collection("posts").doc(post.fId).update({ views: (post.views || 0) + 1 });
     }
 
     function renderDetail(post) {
-        document.getElementById('post-header').innerHTML = `<h1>${post.title}</h1><small>${post.author} | ${post.date}</small>`;
-        document.getElementById('post-body').innerHTML = post.content.replace(/\n/g, '<br>') + (post.file ? `<br><img src="${post.file}" style="max-width:100%">` : '');
+        document.getElementById('post-header').innerHTML = `
+            <div style="color:var(--primary); font-weight:bold;">[${post.board.toUpperCase()}]</div>
+            <h1 style="font-size:24px; margin:10px 0;">${post.title}</h1>
+            <div style="font-size:13px; color:#888;">${post.author} | ${post.date} | 조회 ${post.views}</div>`;
         
-        const isAdmin = state.currentUser && (state.currentUser.role === 'owner' || state.currentUser.id === post.author);
-        document.getElementById('admin-tools').style.display = isAdmin ? 'flex' : 'none';
-        
-        // 댓글 실시간
-        fdb.collection("comments").where("postId", "==", post.id).orderBy("createdAt", "asc").onSnapshot(snap => {
-            const cmts = snap.docs.map(d => d.data());
-            document.getElementById('cmt-count').innerText = cmts.length;
-            document.getElementById('comment-list').innerHTML = cmts.map(c => `
-                <div style="background:#f1f1f1; padding:10px; border-radius:8px; margin-bottom:5px;">
-                    <b>${c.author}</b>: ${c.text}
-                </div>
-            `).join('');
-        });
+        let bodyHtml = parseMarkdown(post.content);
+        if(post.file) bodyHtml += `<img src="${post.file}" style="max-width:100%; border-radius:15px; margin-top:20px;">`;
+        document.getElementById('post-body').innerHTML = bodyHtml;
+
+        const isManager = db.currentUser && (db.currentUser.role === 'owner' || db.currentUser.role === 'admin');
+        document.getElementById('admin-tools').style.display = isManager ? 'flex' : 'none';
+        renderComments();
     }
 
-    function openWriteModal() {
-        if(!state.currentUser) return alert('로그인 하세요.');
-        openModal('writeModal');
-    }
+    function handleSavePost() {
+        if(!db.currentUser) return alert('로그인이 필요합니다.');
+        const t = document.getElementById('writeTitle').value.trim();
+        const c = document.getElementById('writeContent').value.trim();
+        if(!t || !c) return alert('내용을 입력해주세요.');
 
-    async function handleSavePost() {
-        const t = document.getElementById('writeTitle').value;
-        const c = document.getElementById('writeContent').value;
-        if(!t || !c) return alert('내용 부족');
-
-        await fdb.collection("posts").add({
+        const newPost = {
             id: Date.now(),
-            board: state.currentBoard === 'home' ? 'free' : state.currentBoard,
-            title: t, content: c, author: state.currentUser.id,
+            board: db.currentBoard === 'search' ? 'free' : db.currentBoard,
+            title: t, content: c,
+            author: db.currentUser.id,
             date: new Date().toLocaleString(),
-            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            views: 0, isPick: false, file: state.tempImg
+            file: tempImg,
+            views: 0, isPick: false
+        };
+
+        fdb.collection("posts").add(newPost).then(() => {
+            closeModal('writeModal');
+            document.getElementById('writeTitle').value = '';
+            document.getElementById('writeContent').value = '';
+            document.getElementById('writeImgPreview').style.display = 'none';
+            tempImg = null;
         });
-        closeModal('writeModal');
     }
 
-    async function addComment() {
+    function deletePost() {
+        if(!confirm('정말 삭제할까요?')) return;
+        const post = db.posts.find(p => p.id === db.viewingPostId);
+        fdb.collection("posts").doc(post.fId).delete().then(() => showBoard(db.lastBoard));
+    }
+
+    function togglePick() {
+        const post = db.posts.find(p => p.id === db.viewingPostId);
+        fdb.collection("posts").doc(post.fId).update({ isPick: !post.isPick });
+    }
+
+    // 7. 댓글 기능
+    function addComment() {
+        if(!db.currentUser) return alert('로그인이 필요합니다.');
         const inp = document.getElementById('comment-input');
-        if(!state.currentUser || !inp.value) return;
-        await fdb.collection("comments").add({
-            postId: state.viewingPostId,
-            author: state.currentUser.id,
+        if(!inp.value.trim()) return;
+        
+        fdb.collection("comments").add({
+            postId: db.viewingPostId,
+            author: db.currentUser.id,
             text: inp.value,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            date: new Date().toLocaleTimeString()
         });
         inp.value = '';
     }
 
-    // 6. 회원 관리 (Firestore 기반)
+    function renderComments() {
+        const cmts = db.comments.filter(c => c.postId === db.viewingPostId);
+        document.getElementById('cmt-count').innerText = cmts.length;
+        document.getElementById('comment-list').innerHTML = cmts.map(c => `
+            <div style="padding:10px; background:#f8f9fa; border-radius:8px; margin-bottom:5px; font-size:14px;">
+                <b>${c.author}</b> <small style="color:#aaa;">${c.date}</small>
+                <div>${c.text}</div>
+            </div>`).join('') || '댓글이 없습니다.';
+    }
+
+    // 8. 회원가입 및 로그인 (Firestore 기반)
     async function handleJoin() {
-        const id = document.getElementById('joinId').value;
-        const pw = document.getElementById('joinPw').value;
-        const check = await fdb.collection("users").doc(id).get();
-        if(check.exists()) return alert('이미 존재하는 닉네임입니다.');
+        const id = document.getElementById('joinId').value.trim();
+        const pw = document.getElementById('joinPw').value.trim();
+        if(!id || !pw) return alert('입력 확인');
         
-        await fdb.collection("users").doc(id).set({ id, pw, role: 'member' });
-        alert('가입 완료!'); closeModal('joinModal');
+        const exists = db.users.find(u => u.id === id);
+        if(exists) return alert('이미 존재하는 닉네임입니다.');
+
+        await fdb.collection("users").add({ id, pw, role: 'member' });
+        alert('가입 성공! 로그인 해주세요.');
+        closeModal('joinModal');
     }
 
-    async function handleLogin() {
-        const id = document.getElementById('loginId').value;
-        const pw = document.getElementById('loginPw').value;
-        const doc = await fdb.collection("users").doc(id).get();
-        if(!doc.exists() || doc.data().pw !== pw) return alert('정보 불일치');
+    function handleLogin() {
+        const id = document.getElementById('loginId').value.trim();
+        const pw = document.getElementById('loginPw').value.trim();
+        const user = db.users.find(u => u.id === id && u.pw === pw);
         
-        state.currentUser = doc.data();
-        localStorage.setItem('cm_user', JSON.stringify(state.currentUser));
-        updateAuthUI(); closeModal('loginModal');
+        if(!user) return alert('아이디 또는 비밀번호가 틀립니다.');
+        db.currentUser = user;
+        updateAuthUI();
+        closeModal('loginModal');
     }
 
-    function logout() {
-        state.currentUser = null;
-        localStorage.removeItem('cm_user');
-        location.reload();
-    }
-
-    // 7. 유틸리티
     function updateAuthUI() {
-        const auth = document.getElementById('authArea');
-        const user = document.getElementById('userArea');
-        if(state.currentUser) {
-            auth.style.display = 'none'; user.style.display = 'flex';
-            document.getElementById('welcomeMsg').innerText = state.currentUser.id + '님';
-            if(state.currentUser.role === 'owner') document.getElementById('menu-admin').style.display = 'block';
+        const isLogin = !!db.currentUser;
+        document.getElementById('authArea').style.display = isLogin ? 'none' : 'flex';
+        document.getElementById('userArea').style.display = isLogin ? 'flex' : 'none';
+        if(isLogin) {
+            document.getElementById('welcomeMsg').innerText = db.currentUser.id + '님';
+            document.getElementById('menu-admin').style.display = (db.currentUser.role === 'owner') ? 'block' : 'none';
         }
     }
 
-    function updateStats() {
-        document.getElementById('stat-posts').innerText = state.posts.length;
+    // 9. 관리자 전용 함수
+    function addAd() {
+        const title = document.getElementById('adInpTitle').value;
+        const text = document.getElementById('adInpText').value;
+        fdb.collection("ads").add({ title, text, timestamp: Date.now() });
+        alert('광고가 변경되었습니다.');
     }
 
+    function renderAdminUsers() {
+        if(!isPageActive('admin')) return;
+        document.getElementById('admin-user-list').innerHTML = db.users.map(u => `
+            <div class="item-row">
+                <span>${u.id} (${u.role})</span>
+            </div>`).join('');
+    }
+
+    // 10. 유틸리티
+    function parseMarkdown(text) {
+        if (!text) return "";
+        return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+            .replace(/'''(.+?)'''/g, "<strong>$1</strong>")
+            .replace(/~~(.+?)~~/g, "<del>$1</del>")
+            .replace(/\n/g, "<br>");
+    }
+
+    let tempImg = null;
     function handleFilePreview() {
         const file = document.getElementById('fileInput').files[0];
         const reader = new FileReader();
-        reader.onloadend = () => { state.tempImg = reader.result; document.getElementById('writeImgPreview').src = reader.result; document.getElementById('writeImgPreview').style.display='block'; };
+        reader.onloadend = () => { 
+            tempImg = reader.result; 
+            document.getElementById('writeImgPreview').src = tempImg; 
+            document.getElementById('writeImgPreview').style.display = 'block'; 
+        };
         if(file) reader.readAsDataURL(file);
-    }
-
-    async function addAd() {
-        const title = document.getElementById('adInpTitle').value;
-        const text = document.getElementById('adInpText').value;
-        await fdb.collection("settings").doc("ads").set({ title, text });
-        alert('광고 업데이트 완료');
-    }
-
-    async function deletePost() {
-        if(!confirm('삭제?')) return;
-        const post = state.posts.find(p => p.id === state.viewingPostId);
-        await fdb.collection("posts").doc(post.firebaseId).delete();
-        goHome();
-    }
-
-    async function togglePick() {
-        const post = state.posts.find(p => p.id === state.viewingPostId);
-        await fdb.collection("posts").doc(post.firebaseId).update({ isPick: !post.isPick });
     }
 
     function openModal(id) { document.getElementById(id).classList.add('active'); }
     function closeModal(id) { document.getElementById(id).classList.remove('active'); }
-    function goBackList() { showBoard(state.currentBoard); state.viewingPostId = null; }
+    function openWriteModal() { if(!db.currentUser) return alert('로그인 하세요.'); openModal('writeModal'); }
+    function goBackList() { showBoard(db.lastBoard); }
+    function logout() { db.currentUser = null; updateAuthUI(); goHome(); }
+    function updateStats() {
+        document.getElementById('stat-posts').innerText = db.posts.length;
+        document.getElementById('stat-users').innerText = db.users.length;
+    }
 
     window.onload = init;
 </script>
-
 </body>
 </html>
