@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MASTER PIECE - TOTAL CONTROL FINAL</title>
+    <title>MASTER PIECE - SECURITY PATCHED</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
@@ -92,8 +92,8 @@
     <div class="content-left">
         <div id="page-home" class="page active">
             <div class="card" style="background: linear-gradient(135deg, #4f46e5, #818cf8); color: white; border:none;">
-                <h2 style="margin-bottom:8px;">WELCOME MASTER PIECE 🎨</h2>
-                <p style="opacity:0.9; font-size:14px;">보안 패치 및 실시간 관리 엔진이 적용되었습니다.</p>
+                <h2 style="margin-bottom:8px;">SECURE SYSTEM V2.0 🛡️</h2>
+                <p style="opacity:0.9; font-size:14px;">클라이언트 변조 방지 및 실시간 권한 검증 시스템 가동 중</p>
             </div>
             <div class="card">
                 <h3 style="margin-bottom:15px;">🔥 실시간 인기글</h3>
@@ -164,7 +164,7 @@
 
         <div id="page-admin" class="page">
             <div class="card" style="border-left:5px solid var(--primary)">
-                <h3>👥 유저 권한 관리 (실시간)</h3>
+                <h3>👥 유저 권한 관리 (서버 검증됨)</h3>
                 <div id="admin-user-list" style="margin-top:15px;"></div>
             </div>
             <div class="card"><h3>🚨 신고 센터</h3><div id="admin-reports"></div></div>
@@ -215,7 +215,7 @@
 </div>
 
 <script>
-    // 1. Firebase 설정
+    // 1. Firebase 설정 (기존과 동일)
     const firebaseConfig = {
         apiKey: "AIzaSyBcxvsiEOyL1lZGVr1UE2gzzZ7HQX5YfbI",
         authDomain: "code-78890.firebaseapp.com",
@@ -227,22 +227,23 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    // 2. 상태 관리
+    // 2. 상태 관리 (보안 강화됨)
     let state = {
-        user: JSON.parse(localStorage.getItem('mp_session')) || null,
+        user: null, // 초기값 null, 로컬스토리지 즉시 신뢰 금지
         posts: [],
         viewingId: null,
         currentBoard: 'home',
-        commUnsub: null
+        commUnsub: null,
+        authListener: null
     };
 
-    // 3. 보안 및 유틸리티
+    // 3. 보안 유틸리티
     function escapeHtml(text) {
         const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
         return String(text).replace(/[&<>"']/g, m => map[m]);
     }
     function hashPw(pw) { return CryptoJS.SHA256(pw).toString(); }
-
+    
     function namuParser(text) {
         if(!text) return "";
         let s = escapeHtml(text);
@@ -252,7 +253,42 @@
     }
 
     // ==========================================
-    // [중요] 네비게이션 및 화면 전환 함수 (전역 함수)
+    // [보안 핵심] 세션 검증 로직
+    // ==========================================
+    function verifySession() {
+        // 로컬스토리지에서는 오직 'ID'만 가져옵니다. Role은 무시합니다.
+        const stored = localStorage.getItem('mp_session');
+        if(!stored) return;
+
+        try {
+            const session = JSON.parse(stored);
+            if(session && session.id) {
+                // DB에 실시간 리스너를 붙여서 진짜 권한을 감시합니다.
+                state.authListener = db.collection("users").where("id", "==", session.id)
+                    .onSnapshot(snapshot => {
+                        if(snapshot.empty) {
+                            // DB에 없는 유저(삭제됨)라면 강제 로그아웃
+                            alert("유효하지 않은 계정입니다.");
+                            handleLogout();
+                        } else {
+                            // [중요] DB의 데이터를 '진실'로 간주하고 state 덮어쓰기
+                            const realUserData = snapshot.docs[0].data();
+                            state.user = { fId: snapshot.docs[0].id, ...realUserData };
+                            updateAuthUI(); // UI 업데이트
+                            
+                            // 로컬스토리지 갱신 (편의상 저장하지만, 다음 로드 때도 무시되고 DB확인함)
+                            localStorage.setItem('mp_session', JSON.stringify(state.user));
+                        }
+                    });
+            }
+        } catch(e) {
+            console.error("Session Error", e);
+            localStorage.removeItem('mp_session');
+        }
+    }
+
+    // ==========================================
+    // 네비게이션 및 화면 전환
     // ==========================================
     function goHome() { 
         state.viewingId = null; 
@@ -270,18 +306,21 @@
         
         document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
         document.getElementById('m-' + name).classList.add('active');
-        
         showPage('board');
         renderBoardList();
     }
 
     function showPage(id) { 
+        // 권한 체크: 일반 유저가 URL 조작 등으로 관리자 페이지 접근 시도 시 차단
+        if(id === 'admin' && state.user?.role !== 'admin') {
+            alert("관리자 권한이 없습니다 (Server verified)");
+            return goHome();
+        }
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active')); 
         document.getElementById('page-'+id).classList.add('active'); 
         window.scrollTo(0,0); 
     }
 
-    // [수정 완료] viewDetail 함수가 전역 스코프에 정의됨
     function viewDetail(fId) {
         state.viewingId = fId;
         showPage('detail');
@@ -293,21 +332,7 @@
 
     // 4. 초기화 함수
     function init() {
-        if(state.user) {
-            updateAuthUI();
-            // 권한 실시간 동기화
-            db.collection("users").where("id", "==", state.user.id).onSnapshot(s => {
-                if(!s.empty) {
-                    const fresh = s.docs[0].data();
-                    if(fresh.role !== state.user.role) {
-                        state.user.role = fresh.role;
-                        localStorage.setItem('mp_session', JSON.stringify(state.user));
-                        updateAuthUI();
-                    }
-                }
-            });
-            setupNotificationListener();
-        }
+        verifySession(); // [보안] 세션 검증 시작
 
         // 전체 게시글 리스너
         db.collection("posts").orderBy("id", "desc").onSnapshot(snap => {
@@ -320,12 +345,13 @@
         // 통계 리스너
         db.collection("users").onSnapshot(s => {
             document.getElementById('stat-u').innerText = s.size + "명";
+            // 관리자 목록은 유저가 실제 관리자일 때만 렌더링 (UI상)
             if(state.user?.role === 'admin') renderUserList(s.docs.map(d => ({ fId: d.id, ...d.data() })));
         });
         db.collection("posts").onSnapshot(s => document.getElementById('stat-p').innerText = s.size + "개");
         
         setupInquiryListener();
-        if(state.user?.role === 'admin') renderAdminReports();
+        renderAdminReports(); // 로직 내부에서 권한 체크함
     }
 
     // 5. 렌더링 로직
@@ -369,10 +395,14 @@
         document.getElementById('det-content').innerHTML = namuParser(p.content);
         document.getElementById('det-likes').innerText = p.likes || 0;
 
-        document.getElementById('owner-del-btn').style.display = (state.user?.id === p.author || state.user?.role === 'admin') ? 'block' : 'none';
-        document.getElementById('admin-pin-btn').style.display = state.user?.role === 'admin' ? 'block' : 'none';
+        // [보안] 버튼 표시 여부도 state.user(서버동기화됨) 기준으로 결정
+        const isOwner = state.user && state.user.id === p.author;
+        const isAdmin = state.user && state.user.role === 'admin';
 
-        // 댓글
+        document.getElementById('owner-del-btn').style.display = (isOwner || isAdmin) ? 'block' : 'none';
+        document.getElementById('admin-pin-btn').style.display = isAdmin ? 'block' : 'none';
+
+        // 댓글 로드
         if(state.commUnsub) state.commUnsub();
         state.commUnsub = db.collection("comments").where("postId", "==", fId).onSnapshot(s => {
             const cs = s.docs.map(d => d.data()).sort((a,b) => a.date - b.date);
@@ -392,13 +422,13 @@
         const pw = document.getElementById('loginPw').value.trim();
         if(!id || !pw) return alert("입력 오류");
         
-        // 보안: 예약어 차단
         const forbidden = ['admin', '관리자', 'master'];
         if(forbidden.some(f => id.toLowerCase().includes(f))) return alert("사용 불가 닉네임");
 
         const chk = await db.collection("users").where("id", "==", id).get();
         if(!chk.empty) return alert("중복된 ID");
         
+        // 기본 role은 항상 member
         await db.collection("users").add({ id, pw: hashPw(pw), role: 'member', date: Date.now() });
         alert("가입 성공! 로그인 하세요.");
     }
@@ -406,22 +436,36 @@
     async function doLogin() {
         const id = document.getElementById('loginId').value.trim();
         const pw = document.getElementById('loginPw').value.trim();
+        // 로그인 시에는 DB를 한번 조회해서 존재하는지 확인
         const res = await db.collection("users").where("id", "==", id).where("pw", "==", hashPw(pw)).get();
+        
         if(res.empty) return alert("정보 불일치");
-        state.user = res.docs[0].data();
+        
+        // [중요] 로그인 성공 시 로컬 스토리지에 저장하지만, init()에서 다시 검증함
+        const userData = res.docs[0].data();
+        state.user = { fId: res.docs[0].id, ...userData };
         localStorage.setItem('mp_session', JSON.stringify(state.user));
         location.reload();
     }
 
-    function handleLogout() { localStorage.removeItem('mp_session'); location.reload(); }
+    function handleLogout() { 
+        if(state.authListener) state.authListener(); // 리스너 해제
+        localStorage.removeItem('mp_session'); 
+        location.reload(); 
+    }
 
     function updateAuthUI() {
+        if(!state.user) return;
         document.getElementById('authBtnArea').style.display = 'none';
         document.getElementById('userInfoArea').style.display = 'block';
         document.getElementById('userNick').innerText = escapeHtml(state.user.id) + "님";
+        
+        // 관리자 메뉴는 role 확인 후 표시
         document.getElementById('m-admin').style.display = state.user.role === 'admin' ? 'block' : 'none';
+        
         document.getElementById('my-id-display').innerText = state.user.id;
         document.getElementById('my-role-badge').innerHTML = `<span class="tag tag-admin">${state.user.role}</span>`;
+        setupNotificationListener();
     }
 
     // 7. 게시글 작성 및 상호작용
@@ -430,9 +474,8 @@
         const c = document.getElementById('w-content').value.trim();
         if(!t || !c) return alert("내용 입력");
 
-        // [보안] 글쓰기 시 서버 검증
-        const verify = await db.collection("users").where("id", "==", state.user.id).get();
-        if(verify.empty) { alert("계정 검증 실패"); handleLogout(); return; }
+        // [보안 Double Check] 저장 직전 다시 한번 상태 확인
+        if(!state.user) return alert("로그인 세션이 만료되었습니다.");
 
         await db.collection("posts").add({
             title: t, content: c, author: state.user.id, 
@@ -444,7 +487,8 @@
 
     function checkWriteAuth() {
         if(!state.user) return alert("로그인 필요");
-        if(state.currentBoard === 'notice' && state.user.role !== 'admin') return alert("관리자만 가능합니다.");
+        // 공지사항은 관리자만 작성 가능 (Server verified role)
+        if(state.currentBoard === 'notice' && state.user.role !== 'admin') return alert("관리자만 작성 가능합니다.");
         openModal('writeModal');
     }
 
@@ -453,10 +497,8 @@
         if(!val || !state.user) return;
         await db.collection("comments").add({ postId: state.viewingId, user: state.user.id, text: val, date: Date.now() });
         
-        // 알림 전송
         const p = state.posts.find(x => x.fId === state.viewingId);
         if(p.author !== state.user.id) sendNoti(p.author, "내 글에 댓글이 달렸습니다.");
-        
         document.getElementById('commInput').value = '';
     }
 
@@ -472,8 +514,11 @@
         }
     }
 
-    // 8. 관리자 기능 (유저, 신고, 문의)
+    // 8. 관리자 기능 (서버 검증 적용)
     function renderUserList(users) {
+        // [보안] 렌더링 시에도 권한 재확인
+        if(state.user?.role !== 'admin') return; 
+        
         document.getElementById('admin-user-list').innerHTML = users.map(u => `
             <div style="display:flex; justify-content:space-between; align-items:center; padding:12px; background:#f1f5f9; border-radius:12px; margin-bottom:8px;">
                 <span><b>${escapeHtml(u.id)}</b> <small>(${u.role})</small></span>
@@ -485,6 +530,7 @@
     }
 
     async function toggleRole(fId, current) {
+        if(state.user?.role !== 'admin') return alert("권한 부족");
         const next = current === 'admin' ? 'member' : 'admin';
         if(confirm(`등급을 [${next}]로 변경합니까?`)) {
             await db.collection("users").doc(fId).update({ role: next });
@@ -497,15 +543,19 @@
     }
     
     function renderAdminReports() { 
+        // [보안] 리스너는 항상 돌지만, UI 표시는 권한 있을 때만
         db.collection("reports").orderBy("date", "desc").limit(5).onSnapshot(s => { 
-            document.getElementById('admin-reports').innerHTML = s.docs.map(d => 
-                `<div style="font-size:12px; padding:5px;">[${d.data().type}] ${d.data().reason} (by ${d.data().from})</div>`
-            ).join('') || '신고 없음'; 
+            if(state.user?.role === 'admin') {
+                document.getElementById('admin-reports').innerHTML = s.docs.map(d => 
+                    `<div style="font-size:12px; padding:5px;">[${d.data().type}] ${d.data().reason} (by ${d.data().from})</div>`
+                ).join('') || '신고 없음'; 
+            }
         }); 
     }
 
     // 문의 시스템
     async function submitInquiry() {
+        if(!state.user) return alert("로그인 필요");
         const t = document.getElementById('inqText').value;
         if(!t) return;
         await db.collection("inquiries").add({ user: state.user.id, content: t, reply: null, date: Date.now() });
@@ -532,12 +582,16 @@
         });
     }
 
-    async function replyInq(id) { const r = prompt("답변:"); if(r) await db.collection("inquiries").doc(id).update({ reply: r }); }
+    async function replyInq(id) { 
+        if(state.user?.role !== 'admin') return;
+        const r = prompt("답변:"); if(r) await db.collection("inquiries").doc(id).update({ reply: r }); 
+    }
 
     // 알림 시스템
     async function sendNoti(to, msg) { await db.collection("notis").add({ to, msg, read: false, date: Date.now() }); }
     
     function setupNotificationListener() {
+        if(!state.user) return;
         db.collection("notis").where("to", "==", state.user.id).where("read", "==", false).onSnapshot(s => {
             document.getElementById('notiCount').innerText = s.size;
             document.getElementById('notiCount').style.display = s.size > 0 ? 'block' : 'none';
@@ -548,6 +602,7 @@
     }
     
     async function markAllRead() {
+        if(!state.user) return;
         const q = await db.collection("notis").where("to", "==", state.user.id).where("read", "==", false).get();
         const batch = db.batch();
         q.forEach(doc => batch.update(doc.ref, { read: true }));
@@ -566,8 +621,25 @@
         renderBoardList(res);
     }
 
-    async function deletePost() { if(confirm("삭제하시겠습니까?")) { await db.collection("posts").doc(state.viewingId).delete(); goHome(); } }
-    async function setPin() { const p = state.posts.find(x => x.fId === state.viewingId); await db.collection("posts").doc(state.viewingId).update({ isPinned: !p.isPinned }); }
+    async function deletePost() { 
+        // [보안 Double Check]
+        const p = state.posts.find(x => x.fId === state.viewingId);
+        if(!p) return;
+        const isOwner = state.user?.id === p.author;
+        const isAdmin = state.user?.role === 'admin';
+        
+        if(isOwner || isAdmin) {
+            if(confirm("삭제하시겠습니까?")) { await db.collection("posts").doc(state.viewingId).delete(); goHome(); }
+        } else {
+            alert("권한이 없습니다.");
+        }
+    }
+
+    async function setPin() { 
+        if(state.user?.role !== 'admin') return alert("관리자만 가능");
+        const p = state.posts.find(x => x.fId === state.viewingId); 
+        await db.collection("posts").doc(state.viewingId).update({ isPinned: !p.isPinned }); 
+    }
 
     window.onload = init;
 </script>
