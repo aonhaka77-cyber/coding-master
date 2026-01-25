@@ -6,6 +6,7 @@
     <title>MASTER PIECE - TOTAL CONTROL</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <style>
         :root { --primary: #4f46e5; --primary-soft: #eef2ff; --bg: #f8fafc; --card: #ffffff; --text: #1e293b; --danger: #ef4444; }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Pretendard', -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
@@ -93,7 +94,7 @@
         <div id="page-home" class="page active">
             <div class="card" style="background: linear-gradient(135deg, #4f46e5, #818cf8); color: white; border:none;">
                 <h2 style="margin-bottom:8px;">오늘의 마스터 피스 🎨</h2>
-                <p style="opacity:0.9; font-size:14px;">항상 쾌적한 환경이 되도록 노력하겠습니다.</p>
+                <p style="opacity:0.9; font-size:14px;">안전하고 견고하게 설계된 커뮤니티 시스템입니다.</p>
             </div>
             <div class="card">
                 <h3 style="margin-bottom:15px;">🔥 실시간 인기글</h3>
@@ -214,7 +215,7 @@
 </div>
 
 <script>
-    // 1. Firebase 설정 (제공된 프로젝트 정보)
+    // 1. Firebase 설정
     const firebaseConfig = {
         apiKey: "AIzaSyBcxvsiEOyL1lZGVr1UE2gzzZ7HQX5YfbI",
         authDomain: "code-78890.firebaseapp.com",
@@ -235,11 +236,20 @@
         commUnsub: null
     };
 
-    // 3. 초기화 함수
+    // 3. 보안 유틸리티
+    function escapeHtml(text) {
+        const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+        return String(text).replace(/[&<>"']/g, m => map[m]);
+    }
+
+    function hashPassword(pw) {
+        return CryptoJS.SHA256(pw).toString();
+    }
+
+    // 4. 초기화 함수
     function init() {
         if(state.user) updateAuthUI();
         
-        // 전체 게시글 리스너
         db.collection("posts").orderBy("id", "desc").onSnapshot(snap => {
             state.posts = snap.docs.map(d => ({ fId: d.id, ...d.data() }));
             renderHome();
@@ -247,43 +257,54 @@
             if(state.viewingId) renderDetail(state.viewingId);
         });
 
-        // 통계 및 관리자용 리스너
         db.collection("users").onSnapshot(s => {
             document.getElementById('stat-u').innerText = s.size;
             if(state.user?.role === 'admin') renderAdminReports();
         });
         db.collection("posts").onSnapshot(s => document.getElementById('stat-p').innerText = s.size);
         
-        // 알림 리스너
         if(state.user) setupNotificationListener();
-        
-        // 문의 리스너
         setupInquiryListener();
     }
 
-    // 4. 나무위키형 파서
+    // 5. 나무위키형 파서 (XSS 보안 적용)
     function namuParser(text) {
         if(!text) return "";
-        return text
+        let safeText = escapeHtml(text); 
+        return safeText
             .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
             .replace(/--(.*?)--/g, '<del>$1</del>')
             .replace(/> (.*)/g, '<blockquote>$1</blockquote>');
     }
 
-    // 5. 인증 로직 (회원가입/로그인)
+    // 6. 인증 로직 (해싱 적용)
     async function doJoin() {
-        const id = document.getElementById('loginId').value, pw = document.getElementById('loginPw').value;
+        const id = document.getElementById('loginId').value.trim();
+        const pw = document.getElementById('loginPw').value.trim();
         if(!id || !pw) return alert("빈칸을 채워주세요.");
+        if(id.length < 4) return alert("아이디는 4자 이상이어야 합니다.");
+        
         const chk = await db.collection("users").where("id", "==", id).get();
         if(!chk.empty) return alert("이미 사용 중인 아이디입니다.");
         
-        await db.collection("users").add({ id, pw, role: 'member', isBanned: false, createdAt: Date.now() });
+        // 비밀번호를 해싱하여 저장 (보안강화)
+        await db.collection("users").add({ 
+            id, 
+            pw: hashPassword(pw), 
+            role: 'member', 
+            isBanned: false, 
+            createdAt: Date.now() 
+        });
         alert("가입 성공! 이제 로그인 해주세요.");
     }
 
     async function doLogin() {
-        const id = document.getElementById('loginId').value, pw = document.getElementById('loginPw').value;
-        const res = await db.collection("users").where("id", "==", id).where("pw", "==", pw).get();
+        const id = document.getElementById('loginId').value.trim();
+        const pw = document.getElementById('loginPw').value.trim();
+        // 입력된 비밀번호를 해싱하여 DB의 해시값과 비교
+        const hashed = hashPassword(pw);
+        const res = await db.collection("users").where("id", "==", id).where("pw", "==", hashed).get();
+        
         if(res.empty) return alert("아이디 또는 비밀번호가 틀립니다.");
         
         const userData = res.docs[0].data();
@@ -302,19 +323,20 @@
     function updateAuthUI() {
         document.getElementById('authBtnArea').style.display = 'none';
         document.getElementById('userInfoArea').style.display = 'block';
-        document.getElementById('userNick').innerText = state.user.id + "님";
+        document.getElementById('userNick').innerText = escapeHtml(state.user.id) + "님";
         if(state.user.role === 'admin') document.getElementById('m-admin').style.display = 'block';
     }
 
-    // 6. 게시판 로직
+    // 7. 게시판 로직
     function showBoard(boardName) {
         state.currentBoard = boardName;
         state.viewingId = null;
-        document.getElementById('board-title-text').innerText = 
-            boardName === 'notice' ? '📢 공지사항' : boardName === 'free' ? '💬 자유게시판' : '❓ 질문답변';
+        const titles = { notice: '📢 공지사항', free: '💬 자유게시판', qna: '❓ 질문답변' };
+        document.getElementById('board-title-text').innerText = titles[boardName] || '게시판';
         
         document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-        document.getElementById('m-' + boardName).classList.add('active');
+        const navEl = document.getElementById('m-' + boardName);
+        if(navEl) navEl.classList.add('active');
         
         showPage('board');
         renderBoardList();
@@ -326,9 +348,9 @@
         container.innerHTML = list.map(p => `
             <div class="list-item" onclick="viewDetail('${p.fId}')">
                 <div>
-                    <span class="tag ${p.board==='notice'?'tag-notice':'tag-free'}">${p.board}</span>
-                    <b style="font-size:15px;">${p.isPinned ? '📌 ' : ''}${p.title}</b>
-                    <div style="font-size:12px; color:#94a3b8; margin-top:4px;">${p.author} | ${p.date}</div>
+                    <span class="tag ${p.board==='notice'?'tag-notice':'tag-free'}">${escapeHtml(p.board)}</span>
+                    <b style="font-size:15px;">${p.isPinned ? '📌 ' : ''}${escapeHtml(p.title)}</b>
+                    <div style="font-size:12px; color:#94a3b8; margin-top:4px;">${escapeHtml(p.author)} | ${escapeHtml(p.date)}</div>
                 </div>
                 <div style="text-align:right;">
                     <span style="color:var(--danger); font-weight:700; font-size:13px;">❤️ ${p.likes || 0}</span>
@@ -337,7 +359,7 @@
         `).join('') || '<div style="padding:50px; text-align:center; color:#94a3b8;">작성된 글이 없습니다.</div>';
     }
 
-    // 7. 상세 보기 & 실시간 댓글 (보내주신 DB 구조 반영)
+    // 8. 상세 보기 & 댓글
     function viewDetail(fId) {
         state.viewingId = fId;
         showPage('detail');
@@ -355,25 +377,25 @@
         document.getElementById('det-content').innerHTML = namuParser(p.content);
         document.getElementById('det-likes').innerText = p.likes || 0;
 
-        // 권한 확인 (삭제/공지)
+        // 버튼 초기화
+        document.getElementById('owner-del-btn').style.display = 'none';
+        document.getElementById('admin-pin-btn').style.display = 'none';
+
         if(state.user) {
             if(state.user.id === p.author || state.user.role === 'admin') document.getElementById('owner-del-btn').style.display = 'block';
             if(state.user.role === 'admin') document.getElementById('admin-pin-btn').style.display = 'block';
         }
 
-        // 실시간 댓글 (보내주신 스크린샷 구조 반영)
         if(state.commUnsub) state.commUnsub();
-        // Index 에러 방지를 위해 orderBy를 빼고 클라이언트에서 정렬합니다.
         state.commUnsub = db.collection("comments").where("postId", "==", fId).onSnapshot(snap => {
             let comms = snap.docs.map(d => ({ cid: d.id, ...d.data() }));
-            // 스크린샷의 숫자형 date 기준 정렬
             comms.sort((a, b) => a.date - b.date); 
 
             document.getElementById('det-comm-cnt').innerText = comms.length;
             document.getElementById('comm-container').innerHTML = comms.map(c => `
                 <div style="background:#f8fafc; padding:12px; border-radius:12px; margin-bottom:10px; font-size:14px; position:relative;">
-                    <b style="color:var(--primary);">${c.user}</b> <small style="color:#cbd5e1; margin-left:8px;">${new Date(c.date).toLocaleString()}</small>
-                    <div style="margin-top:5px; line-height:1.4;">${c.text}</div>
+                    <b style="color:var(--primary);">${escapeHtml(c.user)}</b> <small style="color:#cbd5e1; margin-left:8px;">${new Date(c.date).toLocaleString()}</small>
+                    <div style="margin-top:5px; line-height:1.4;">${escapeHtml(c.text)}</div>
                     <span style="position:absolute; top:12px; right:12px; cursor:pointer; font-size:10px; color:#cbd5e1;" onclick="reportContent('comment', '${c.cid}')">신고</span>
                 </div>
             `).join('') || '<p style="color:#94a3b8; font-size:13px; text-align:center;">첫 댓글을 남겨보세요!</p>';
@@ -382,22 +404,20 @@
 
     async function submitComment() {
         if(!state.user) return alert("로그인이 필요합니다.");
-        const txt = document.getElementById('commInput').value;
+        const txt = document.getElementById('commInput').value.trim();
         if(!txt) return;
 
-        // 스크린샷 데이터 구조와 완벽 일치
         const newComm = {
             postId: state.viewingId,
             user: state.user.id,
             text: txt,
-            date: Date.now() // 이미지의 숫자형 타임스탬프 형식
+            date: Date.now()
         };
 
         await db.collection("comments").add(newComm);
         
-        // 작성자에게 알림 발송
         const post = state.posts.find(x => x.fId === state.viewingId);
-        if(post.author !== state.user.id) {
+        if(post && post.author !== state.user.id) {
             await db.collection("notis").add({
                 to: post.author,
                 msg: `내 글에 새로운 댓글이 달렸습니다: "${txt.substring(0,10)}..."`,
@@ -405,11 +425,10 @@
                 date: Date.now()
             });
         }
-        
         document.getElementById('commInput').value = '';
     }
 
-    // 8. 기능 (좋아요/검색/신고)
+    // 9. 주요 기능
     async function toggleLike() {
         if(!state.user) return alert("로그인 후 이용 가능합니다.");
         const p = state.posts.find(x => x.fId === state.viewingId);
@@ -424,24 +443,65 @@
     }
 
     function execSearch() {
-        const q = document.getElementById('mainSearch').value.toLowerCase();
+        const q = document.getElementById('mainSearch').value.trim().toLowerCase();
         if(!q) return goHome();
         const filtered = state.posts.filter(p => p.title.toLowerCase().includes(q) || p.content.toLowerCase().includes(q));
         state.currentBoard = 'search';
-        document.getElementById('board-title-text').innerText = `🔍 "${q}" 검색 결과`;
+        document.getElementById('board-title-text').innerText = `🔍 "${escapeHtml(q)}" 검색 결과`;
         showPage('board');
         renderBoardList(filtered);
+    }
+
+    async function savePost() {
+        if(!state.user) return;
+        const title = document.getElementById('w-title').value.trim();
+        const content = document.getElementById('w-content').value.trim();
+        if(!title || !content) return alert("내용을 입력해주세요.");
+        if(title.length > 100) return alert("제목이 너무 깁니다.");
+
+        await db.collection("posts").add({
+            id: Date.now(),
+            board: state.currentBoard === 'search' ? 'free' : state.currentBoard,
+            title, content, author: state.user.id,
+            date: new Date().toLocaleDateString(),
+            likes: 0, likedBy: [], isPinned: false
+        });
+
+        closeModal('writeModal');
+        showBoard(state.currentBoard === 'search' ? 'free' : state.currentBoard);
+    }
+
+    // 10. 유틸리티 & 알림
+    function showPage(pageId) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById('page-' + pageId).classList.add('active');
+        if(pageId === 'mypage') renderMyPage();
+        window.scrollTo(0, 0);
+    }
+
+    function renderHome() {
+        const hot = state.posts.filter(p => (p.likes || 0) >= 5).slice(0, 5);
+        document.getElementById('hot-posts').innerHTML = hot.map(p => `
+            <div class="list-item" onclick="viewDetail('${p.fId}')">
+                <span>${escapeHtml(p.title)}</span> <b style="color:var(--danger);">❤️ ${p.likes}</b>
+            </div>
+        `).join('') || '<p style="font-size:13px; color:#94a3b8; text-align:center;">아직 인기글이 없습니다.</p>';
+        
+        document.getElementById('recent-posts').innerHTML = state.posts.slice(0, 5).map(p => `
+            <div class="list-item" onclick="viewDetail('${p.fId}')">
+                <span>${escapeHtml(p.title)}</span> <small style="color:#94a3b8;">${escapeHtml(p.date)}</small>
+            </div>
+        `).join('');
     }
 
     async function reportContent(type, id) {
         if(!state.user) return alert("로그인 필요");
         const reason = prompt("신고 사유를 입력하세요:");
         if(!reason) return;
-        await db.collection("reports").add({ type, targetId: id, reason, reporter: state.user.id, date: Date.now() });
+        await db.collection("reports").add({ type, targetId: id, reason: escapeHtml(reason), reporter: state.user.id, date: Date.now() });
         alert("신고가 접수되었습니다.");
     }
 
-    // 9. 알림 & 문의 (고급 기능)
     function setupNotificationListener() {
         db.collection("notis").where("to", "==", state.user.id).where("read", "==", false)
             .onSnapshot(s => {
@@ -450,7 +510,7 @@
                 document.getElementById('notiCount').style.display = count > 0 ? 'block' : 'none';
                 document.getElementById('notiList').innerHTML = s.docs.map(d => `
                     <div style="padding:10px; border-bottom:1px solid #f1f5f9; cursor:pointer;" onclick="markRead('${d.id}')">
-                        ${d.data().msg}
+                        ${escapeHtml(d.data().msg)}
                     </div>
                 `).join('') || '<p style="padding:20px; text-align:center; color:#94a3b8;">새로운 알림이 없습니다.</p>';
             });
@@ -465,7 +525,7 @@
     }
 
     async function submitInquiry() {
-        const text = document.getElementById('inqText').value;
+        const text = document.getElementById('inqText').value.trim();
         if(!text) return;
         await db.collection("inquiries").add({ user: state.user.id, content: text, reply: null, date: Date.now() });
         alert("문의가 접수되었습니다.");
@@ -479,15 +539,15 @@
                 const mine = all.filter(i => i.user === state.user.id);
                 document.getElementById('my-inq-status').innerHTML = mine.map(m => `
                     <div class="card">
-                        <b>질문:</b> ${m.content}<br>
-                        <b style="color:var(--primary);">답변:</b> ${m.reply || '운영진의 답변을 기다리는 중입니다.'}
+                        <b>질문:</b> ${escapeHtml(m.content)}<br>
+                        <b style="color:var(--primary);">답변:</b> ${m.reply ? escapeHtml(m.reply) : '운영진의 답변을 기다리는 중입니다.'}
                     </div>
                 `).join('');
             }
             if(state.user?.role === 'admin') {
                 document.getElementById('admin-inquiries').innerHTML = all.map(i => `
                     <div style="padding:10px; border-bottom:1px solid #eee;">
-                        <b>${i.user}:</b> ${i.content}<br>
+                        <b>${escapeHtml(i.user)}:</b> ${escapeHtml(i.content)}<br>
                         <button onclick="replyInquiry('${i.fId}')" class="btn btn-s" style="font-size:10px; padding:4px 8px;">답변달기</button>
                     </div>
                 `).join('');
@@ -497,36 +557,18 @@
 
     async function replyInquiry(fId) {
         const reply = prompt("답변을 입력하세요:");
-        if(reply) await db.collection("inquiries").doc(fId).update({ reply });
+        if(reply) await db.collection("inquiries").doc(fId).update({ reply: escapeHtml(reply) });
     }
 
-    // 10. 관리 도구
     function renderAdminReports() {
         db.collection("reports").orderBy("date", "desc").limit(10).onSnapshot(s => {
             document.getElementById('admin-reports').innerHTML = s.docs.map(d => `
                 <div style="font-size:12px; margin-bottom:10px; padding:8px; background:#fff1f2; border-radius:8px;">
-                    [${d.data().type}] 사유: ${d.data().reason} <br>
-                    대상ID: ${d.data().targetId} (작성자: ${d.data().reporter})
+                    [${escapeHtml(d.data().type)}] 사유: ${escapeHtml(d.data().reason)} <br>
+                    대상ID: ${escapeHtml(d.data().targetId)} (작성자: ${escapeHtml(d.data().reporter)})
                 </div>
             `).join('') || '신고 내역이 없습니다.';
         });
-    }
-
-    // 11. 글쓰기 저장
-    async function savePost() {
-        const title = document.getElementById('w-title').value, content = document.getElementById('w-content').value;
-        if(!title || !content) return alert("내용을 입력해주세요.");
-
-        await db.collection("posts").add({
-            id: Date.now(),
-            board: state.currentBoard === 'search' ? 'free' : state.currentBoard,
-            title, content, author: state.user.id,
-            date: new Date().toLocaleDateString(),
-            likes: 0, likedBy: [], isPinned: false
-        });
-
-        closeModal('writeModal');
-        showBoard(state.currentBoard === 'search' ? 'free' : state.currentBoard);
     }
 
     async function deletePost() {
@@ -542,35 +584,12 @@
         alert("고정 상태가 변경되었습니다.");
     }
 
-    // 12. 유틸리티
-    function showPage(pageId) {
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        document.getElementById('page-' + pageId).classList.add('active');
-        if(pageId === 'mypage') renderMyPage();
-        window.scrollTo(0, 0);
-    }
-
-    function renderHome() {
-        const hot = state.posts.filter(p => (p.likes || 0) >= 5).slice(0, 5);
-        document.getElementById('hot-posts').innerHTML = hot.map(p => `
-            <div class="list-item" onclick="viewDetail('${p.fId}')">
-                <span>${p.title}</span> <b style="color:var(--danger);">❤️ ${p.likes}</b>
-            </div>
-        `).join('') || '<p style="font-size:13px; color:#94a3b8; text-align:center;">아직 인기글이 없습니다.</p>';
-        
-        document.getElementById('recent-posts').innerHTML = state.posts.slice(0, 5).map(p => `
-            <div class="list-item" onclick="viewDetail('${p.fId}')">
-                <span>${p.title}</span> <small style="color:#94a3b8;">${p.date}</small>
-            </div>
-        `).join('');
-    }
-
     function renderMyPage() {
         document.getElementById('my-id-display').innerText = state.user.id;
         const mine = state.posts.filter(p => p.author === state.user.id);
         document.getElementById('my-posts-list').innerHTML = mine.map(p => `
             <div class="list-item" onclick="viewDetail('${p.fId}')">
-                ${p.title} <small>${p.date}</small>
+                ${escapeHtml(p.title)} <small>${escapeHtml(p.date)}</small>
             </div>
         `).join('') || '작성한 글이 없습니다.';
     }
@@ -596,4 +615,3 @@
 </script>
 </body>
 </html>
-
