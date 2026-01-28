@@ -227,7 +227,7 @@
 
         // 6. 데이터 로딩 (인덱스 에러 감지 포함)
         function loadData() {
-            db.collection("posts").orderBy("date", "desc").onSnapshot(snap => {
+            db.collection("posts").orderBy("date", "asc").onSnapshot(snap => {
                 state.posts = snap.docs.map(d => ({ fId: d.id, ...d.data() }));
                 renderPosts();
                 if(state.viewingId) renderDetail();
@@ -484,3 +484,4 @@
     </script>
 </body>
 </html>
+
