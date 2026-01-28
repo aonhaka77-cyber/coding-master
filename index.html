@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Coding Master | Developer Community</title>
+    <title>Coding Master | Admin & Community</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
@@ -14,20 +14,21 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
 
     <style>
-        :root { --primary: #4f46e5; --primary-hover: #4338ca; --bg: #f1f5f9; }
+        :root { --primary: #4f46e5; --bg: #f8fafc; }
         body { background: var(--bg); font-family: 'Pretendard', sans-serif; color: #1e293b; }
-        .navbar { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border-bottom: 1px solid #e2e8f0; }
-        .sidebar-link { border-radius: 8px; margin-bottom: 5px; transition: all 0.2s; cursor: pointer; font-weight: 500; text-decoration: none; color: inherit; display: block; padding: 10px 15px; }
-        .sidebar-link:hover { background-color: #e2e8f0; color: var(--primary); }
-        .sidebar-link.active { background-color: var(--primary) !important; color: white !important; }
-        .card { border: none; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); transition: transform 0.2s; }
-        .post-card:hover { transform: translateY(-3px); }
+        .navbar { background: white; border-bottom: 1px solid #e2e8f0; }
+        .sidebar-link { border-radius: 12px; margin-bottom: 4px; transition: 0.2s; cursor: pointer; text-decoration: none; color: #64748b; display: block; padding: 12px 16px; }
+        .sidebar-link:hover { background: #f1f5f9; color: var(--primary); }
+        .sidebar-link.active { background: var(--primary) !important; color: white !important; font-weight: 600; }
+        .card { border: none; border-radius: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
+        .post-card { transition: 0.3s; border: 1px solid transparent; }
+        .post-card:hover { transform: translateY(-5px); border-color: #e2e8f0; }
         .badge-notice { background: #fee2e2; color: #ef4444; }
         .badge-qna { background: #fef3c7; color: #d97706; }
         .badge-free { background: #e0f2fe; color: #0ea5e9; }
-        .empty-state { text-align: center; padding: 40px; color: #94a3b8; }
-        pre { background: #f8fafc; padding: 15px; border-radius: 8px; white-space: pre-wrap; font-family: 'Courier New', Courier, monospace; }
-        .noti-badge { position: absolute; top: -5px; right: -5px; font-size: 0.65rem; }
+        .noti-badge { position: absolute; top: -2px; right: -2px; font-size: 0.7rem; border: 2px solid white; }
+        /* XSS 방지를 위한 텍스트 처리 스타일 */
+        .content-area { white-space: pre-wrap; word-break: break-all; line-height: 1.7; }
     </style>
 </head>
 <body>
@@ -38,7 +39,7 @@
             <div class="d-flex align-items-center">
                 <div id="auth-zone" class="me-3"></div>
                 <div class="position-relative" onclick="showPage('noti')" style="cursor:pointer">
-                    <span style="font-size: 1.4rem;">🔔</span>
+                    <span style="font-size: 1.5rem;">🔔</span>
                     <span id="noti-count" class="badge rounded-pill bg-danger noti-badge" style="display:none">0</span>
                 </div>
             </div>
@@ -48,19 +49,19 @@
     <div class="container">
         <div class="row">
             <div class="col-md-3 mb-4">
-                <div class="card p-3 shadow-sm">
+                <div class="card p-3 shadow-sm sticky-top" style="top: 90px;">
                     <div class="list-group list-group-flush">
-                        <small class="text-muted px-3 mb-2">게시판</small>
+                        <small class="text-muted px-3 mb-2 fw-bold">BOARD</small>
                         <a class="sidebar-link active" id="menu-all" onclick="filterCategory('all')">🏠 전체 게시글</a>
                         <a class="sidebar-link" id="menu-notice" onclick="filterCategory('notice')">📢 공지사항</a>
                         <a class="sidebar-link" id="menu-free" onclick="filterCategory('free')">🌱 자유게시판</a>
                         <a class="sidebar-link" id="menu-qna" onclick="filterCategory('qna')">❓ Q&A / 건의</a>
                         <hr>
-                        <a class="sidebar-link" onclick="showPage('write')">✍️ 새 글 작성</a>
+                        <a class="sidebar-link" onclick="handleWriteAccess()">✍️ 새 글 작성</a>
                         <a class="sidebar-link" onclick="showPage('inquiry')">💬 1:1 문의</a>
                         <div id="admin-menu" style="display:none">
                             <hr>
-                            <small class="text-danger px-3 mb-2 fw-bold">ADMIN ONLY</small>
+                            <small class="text-danger px-3 mb-2 fw-bold">ADMIN PANEL</small>
                             <a class="sidebar-link text-danger" onclick="showPage('admin')">⚙️ 관리자 센터</a>
                         </div>
                     </div>
@@ -69,25 +70,30 @@
 
             <div class="col-md-9">
                 <div id="page-home" class="page-content">
-                    <h4 class="fw-bold mb-4" id="board-title">최신 커뮤니티 글</h4>
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h4 class="fw-bold m-0" id="board-title">커뮤니티 광장</h4>
+                        <div class="dropdown">
+                            <button class="btn btn-white btn-sm shadow-sm dropdown-toggle" data-bs-toggle="dropdown">최신순</button>
+                        </div>
+                    </div>
                     <div id="post-list" class="row g-4"></div>
                 </div>
 
                 <div id="page-write" class="page-content" style="display:none">
                     <div class="card p-4">
-                        <h4 class="fw-bold mb-4">✍️ 지식 공유하기</h4>
-                        <select id="postCategory" class="form-select mb-3 border-0 shadow-sm" style="background:#f8fafc;">
+                        <h4 class="fw-bold mb-4">✍️ 포스트 작성</h4>
+                        <select id="postCategory" class="form-select mb-3 border-0 bg-light p-3">
                             <option value="free">자유게시판</option>
                             <option value="qna">Q&A (질문/건의)</option>
-                            <option value="notice" id="opt-notice" style="display:none">공지사항 (운영자 전용)</option>
+                            <option value="notice" id="opt-notice" style="display:none">공지사항 (운영자)</option>
                         </select>
-                        <input id="postTitle" class="form-control mb-3 p-3 border-0 shadow-sm" placeholder="제목을 입력하세요" style="background:#f8fafc;">
-                        <textarea id="postContent" class="form-control mb-3 p-3 border-0 shadow-sm" rows="10" placeholder="내용을 입력하세요..." style="background:#f8fafc;"></textarea>
+                        <input id="postTitle" class="form-control mb-3 p-3 border-0 bg-light" placeholder="제목을 입력하세요">
+                        <textarea id="postContent" class="form-control mb-3 p-3 border-0 bg-light" rows="12" placeholder="코드나 지식을 공유해 주세요..."></textarea>
                         <div class="mb-4">
-                            <label class="form-label small fw-bold text-muted">📎 파일 첨부 (선택)</label>
-                            <input type="file" id="postFile" class="form-control border-0 shadow-sm" style="background:#f8fafc;">
+                            <label class="form-label small fw-bold">📎 파일 첨부</label>
+                            <input type="file" id="postFile" class="form-control border-0 bg-light">
                         </div>
-                        <button id="uploadBtn" class="btn btn-primary w-100 fw-bold p-3" onclick="uploadPost()">게시물 등록하기</button>
+                        <button id="uploadBtn" class="btn btn-primary w-100 fw-bold p-3" onclick="uploadPost()">게시물 등록</button>
                     </div>
                 </div>
 
@@ -95,50 +101,53 @@
                     <div class="card p-4 mb-4">
                         <div id="post-detail"></div>
                         <hr class="my-4">
-                        <h5 class="fw-bold mb-3">댓글 <span id="comment-total" class="text-primary">0</span></h5>
+                        <h5 class="fw-bold mb-4">댓글 <span id="comment-total" class="text-primary">0</span></h5>
                         <div id="comment-list" class="mb-4"></div>
                         <div class="input-group shadow-sm">
-                            <input id="commInput" class="form-control border-0 p-3" placeholder="댓글을 입력해 보세요...">
+                            <input id="commInput" class="form-control border-0 p-3 bg-light" placeholder="따뜻한 댓글을 남겨주세요.">
                             <button class="btn btn-primary px-4" onclick="addComment()">등록</button>
                         </div>
                     </div>
                 </div>
 
                 <div id="page-admin" class="page-content" style="display:none">
-                    <h4 class="fw-bold mb-4 text-danger">⚙️ 관리자 센터 (1:1 문의 관리)</h4>
+                    <h4 class="fw-bold mb-4 text-danger">⚙️ 관리자: 1:1 문의 관리</h4>
                     <div id="admin-inquiry-list"></div>
                 </div>
 
                 <div id="page-noti" class="page-content" style="display:none">
-                    <h4 class="fw-bold mb-4">🔔 알림 센터</h4>
+                    <h4 class="fw-bold mb-4">🔔 내 알림</h4>
                     <div id="noti-list"></div>
                 </div>
 
                 <div id="page-inquiry" class="page-content" style="display:none">
                     <div class="card p-4 mb-4">
-                        <h4 class="fw-bold">💬 1:1 문의하기</h4>
-                        <textarea id="inqInput" class="form-control mb-3 border-0 shadow-sm" style="background:#f8fafc;" rows="3" placeholder="관리자에게 궁금한 점을 남겨주세요."></textarea>
-                        <button class="btn btn-dark w-100" onclick="sendInquiry()">문의 접수</button>
+                        <h4 class="fw-bold">💬 운영진 문의</h4>
+                        <p class="text-muted small">기능 추가 제안이나 버그 리포트를 남겨주세요.</p>
+                        <textarea id="inqInput" class="form-control mb-3 border-0 bg-light" rows="3" placeholder="내용을 작성하세요."></textarea>
+                        <button class="btn btn-dark w-100 p-3 fw-bold" onclick="sendInquiry()">문의 접수하기</button>
                     </div>
-                    <h5 class="fw-bold mb-3">내 문의 내역</h5>
+                    <h5 class="fw-bold mb-3">내 문의 기록</h5>
                     <div id="my-inq-list"></div>
                 </div>
 
                 <div id="page-auth" class="page-content" style="display:none">
-                    <div class="card p-4 mx-auto" style="max-width: 400px;">
-                        <h3 class="fw-bold text-center mb-4">로그인</h3>
-                        <input id="authEmail" class="form-control mb-3" placeholder="이메일">
-                        <input id="authPassword" type="password" class="form-control mb-3" placeholder="비밀번호">
-                        <button class="btn btn-primary w-100 mb-2" onclick="handleLogin()">로그인</button>
-                        <button class="btn btn-outline-secondary w-100" onclick="handleSignUp()">회원가입</button>
+                    <div class="card p-5 mx-auto text-center" style="max-width: 450px;">
+                        <h3 class="fw-bold mb-4">Welcome!</h3>
+                        <input id="authEmail" class="form-control mb-3 p-3" placeholder="이메일 주소">
+                        <input id="authPassword" type="password" class="form-control mb-3 p-3" placeholder="비밀번호">
+                        <button class="btn btn-primary w-100 p-3 fw-bold mb-3" onclick="handleLogin()">로그인</button>
+                        <button class="btn btn-link text-decoration-none text-muted" onclick="handleSignUp()">이메일로 회원가입</button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
     <script>
-        // 1. Firebase 설정 (본인의 설정값 확인)
+        // 1. Firebase Config (유지)
         const firebaseConfig = {
             apiKey: "AIzaSyBcxvsiEOyL1lZGVr1UE2gzzZ7HQX5YfbI",
             authDomain: "code-78890.firebaseapp.com",
@@ -155,18 +164,26 @@
         // 2. 전역 상태
         let state = { user: null, posts: [], currentCat: 'all', viewingId: null };
 
-        // 3. 인증 로직 (이미지 기반 role 체크 추가)
+        // 3. 보안: 텍스트 이스케이프 (XSS 방지)
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // 4. 인증 및 운영자 체크
         auth.onAuthStateChanged(async (user) => {
             const authZone = document.getElementById('auth-zone');
             if (user) {
+                // DB에서 role 확인 (사용자가 올린 이미지의 role: "member"/"admin" 참조)
                 const userDoc = await db.collection("users").doc(user.uid).get();
-                const userData = userDoc.exists ? userDoc.data() : { role: 'member', id: user.email.split('@')[0] };
+                const userData = userDoc.exists ? userDoc.data() : { id: user.email.split('@')[0], role: 'member' };
                 
                 state.user = { uid: user.uid, ...userData };
                 
                 authZone.innerHTML = `
-                    <span class="me-2 fw-bold">${state.user.role === 'admin' ? '🛡️ ' : ''}${state.user.id}님</span>
-                    <button class="btn btn-sm btn-outline-danger border-0" onclick="auth.signOut()">로그아웃</button>
+                    <span class="me-2 fw-bold small text-secondary">${state.user.role === 'admin' ? '🛡️ 관리자 ' : ''}${escapeHtml(state.user.id)}님</span>
+                    <button class="btn btn-sm btn-outline-secondary border-0" onclick="auth.signOut()">로그아웃</button>
                 `;
                 
                 if(state.user.role === 'admin') {
@@ -176,19 +193,28 @@
                 loadNotis();
             } else {
                 state.user = null;
-                authZone.innerHTML = `<button class="btn btn-sm btn-primary" onclick="showPage('auth')">로그인</button>`;
+                authZone.innerHTML = `<button class="btn btn-sm btn-primary px-3" onclick="showPage('auth')">로그인</button>`;
                 document.getElementById('admin-menu').style.display = 'none';
                 document.getElementById('opt-notice').style.display = 'none';
             }
         });
 
-        // 4. 페이지 및 필터 로직
+        // 5. 페이지 전환 및 권한 제어
         function showPage(pageId) {
             document.querySelectorAll('.page-content').forEach(p => p.style.display = 'none');
             document.getElementById('page-' + pageId).style.display = 'block';
-            if(pageId === 'admin') loadAdminInquiries();
+            
+            if(pageId === 'admin') {
+                if(state.user?.role !== 'admin') { alert("권한이 없습니다."); showPage('home'); return; }
+                loadAdminInquiries();
+            }
             if(pageId === 'inquiry' && state.user) loadMyInquiries();
             window.scrollTo(0,0);
+        }
+
+        function handleWriteAccess() {
+            if(!state.user) { alert("로그인이 필요한 서비스입니다."); showPage('auth'); return; }
+            showPage('write');
         }
 
         function filterCategory(cat) {
@@ -199,23 +225,69 @@
             showPage('home');
         }
 
-        // 5. 게시글 CRUD (파일 업로드 포함)
+        // 6. 데이터 로딩 (인덱스 에러 감지 포함)
+        function loadData() {
+            db.collection("posts").orderBy("date", "desc").onSnapshot(snap => {
+                state.posts = snap.docs.map(d => ({ fId: d.id, ...d.data() }));
+                renderPosts();
+                if(state.viewingId) renderDetail();
+            }, err => {
+                console.error(err);
+                if(err.message.includes("index")) {
+                    alert("인덱스 설정이 필요합니다. 콘솔창의 링크를 확인해 주세요.");
+                }
+            });
+        }
+
+        function renderPosts() {
+            const list = document.getElementById('post-list');
+            // 카테고리 없는 기존 데이터는 'free'로 기본값 설정
+            const filtered = state.currentCat === 'all' 
+                ? state.posts 
+                : state.posts.filter(p => (p.category || 'free') === state.currentCat);
+            
+            if(filtered.length === 0) {
+                list.innerHTML = `<div class="text-center py-5 text-muted">아직 등록된 게시글물이 없습니다.</div>`;
+                return;
+            }
+
+            list.innerHTML = filtered.map(p => `
+                <div class="col-md-6">
+                    <div class="card h-100 p-4 post-card" onclick="viewPost('${p.fId}')" style="cursor:pointer">
+                        <div class="mb-3 d-flex justify-content-between">
+                            <span class="badge badge-${p.category || 'free'} small">
+                                ${p.category === 'notice' ? '📢 공지' : p.category === 'qna' ? '❓ Q&A' : '🌱 자유'}
+                            </span>
+                            ${p.fileUrl ? '<span class="text-muted small">📎 첨부파일</span>' : ''}
+                        </div>
+                        <h5 class="fw-bold mb-2 text-truncate">${escapeHtml(p.title)}</h5>
+                        <p class="text-muted small text-truncate-2" style="min-height:2.8rem">${escapeHtml(p.content.substring(0, 90))}</p>
+                        <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
+                            <span class="small text-secondary fw-bold">👤 ${escapeHtml(p.authorId)}</span>
+                            <span class="text-danger small fw-bold">❤️ ${p.likes || 0}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 7. 게시글 상세 및 CRUD
         async function uploadPost() {
-            if(!state.user) return alert("로그인하세요.");
-            const title = document.getElementById('postTitle').value;
-            const content = document.getElementById('postContent').value;
+            if(!state.user) return alert("로그인 후 이용 가능합니다.");
+            const title = document.getElementById('postTitle').value.trim();
+            const content = document.getElementById('postContent').value.trim();
             const category = document.getElementById('postCategory').value;
             const file = document.getElementById('postFile').files[0];
             const btn = document.getElementById('uploadBtn');
 
-            if(!title || !content) return alert("내용을 입력하세요.");
-            btn.disabled = true; btn.innerText = "업로드 중...";
+            if(!title || !content) return alert("제목과 내용을 모두 입력해 주세요.");
+            
+            btn.disabled = true; btn.innerText = "데이터 처리 중...";
 
             try {
-                let fileUrl = null;
-                let fileName = null;
+                let fileUrl = null, fileName = null;
                 if(file) {
-                    const ref = storage.ref(`posts/${Date.now()}_${file.name}`);
+                    const ref = storage.ref(`uploads/${Date.now()}_${file.name}`);
                     await ref.put(file);
                     fileUrl = await ref.getDownloadURL();
                     fileName = file.name;
@@ -226,41 +298,13 @@
                     authorId: state.user.id, authorUid: state.user.uid,
                     date: Date.now(), likes: 0, likedBy: []
                 });
+                
+                alert("게시글이 성공적으로 등록되었습니다!");
                 location.reload();
-            } catch(e) { alert(e.message); btn.disabled = false; }
-        }
-
-        function loadData() {
-            db.collection("posts").orderBy("date", "desc").onSnapshot(snap => {
-                state.posts = snap.docs.map(d => ({ fId: d.id, ...d.data() }));
-                renderPosts();
-                if(state.viewingId) renderDetail();
-            });
-        }
-
-        function renderPosts() {
-            const list = document.getElementById('post-list');
-            const filtered = state.currentCat === 'all' ? state.posts : state.posts.filter(p => p.category === state.currentCat);
-            
-            if(filtered.length === 0) {
-                list.innerHTML = '<div class="empty-state">글이 없습니다. 첫 글을 남겨보세요!</div>'; return;
+            } catch(e) { 
+                alert("업로드 중 오류: " + e.message); 
+                btn.disabled = false; btn.innerText = "게시물 등록";
             }
-
-            list.innerHTML = filtered.map(p => `
-                <div class="col-md-6">
-                    <div class="card h-100 p-4 post-card border-0 shadow-sm" onclick="viewPost('${p.fId}')" style="cursor:pointer">
-                        <div class="mb-2">
-                            <span class="badge badge-${p.category || 'free'}">${p.category === 'notice' ? '📢 공지' : p.category === 'qna' ? '❓ Q&A' : '🌱 자유'}</span>
-                        </div>
-                        <h5 class="fw-bold mb-2 text-truncate">${p.title}</h5>
-                        <p class="text-muted small text-truncate-2" style="height:3rem">${p.content.substring(0,80)}</p>
-                        <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
-                            <span class="small fw-bold">👤 ${p.authorId}</span>
-                            <span class="text-danger small">❤️ ${p.likes || 0} ${p.fileUrl ? '📎' : ''}</span>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
         }
 
         function viewPost(id) {
@@ -274,39 +318,65 @@
             
             document.getElementById('post-detail').innerHTML = `
                 <div class="d-flex justify-content-between align-items-start mb-3">
-                    <h2 class="fw-bold">${p.title}</h2>
-                    ${(p.authorUid === state.user?.uid || state.user?.role === 'admin') ? `<button class="btn btn-sm btn-outline-danger" onclick="deletePost('${p.fId}')">삭제</button>` : ''}
+                    <h2 class="fw-bold m-0">${escapeHtml(p.title)}</h2>
+                    ${(p.authorUid === state.user?.uid || state.user?.role === 'admin') ? 
+                        `<button class="btn btn-sm btn-outline-danger" onclick="deletePost('${p.fId}')">삭제하기</button>` : ''}
                 </div>
-                <div class="mb-4 text-muted small"><b>${p.authorId}</b> | ${new Date(p.date).toLocaleString()}</div>
-                <div class="mb-4" style="line-height:1.8; white-space:pre-wrap;">${p.content}</div>
+                <div class="mb-4 text-muted small">
+                    <span class="fw-bold text-dark">${escapeHtml(p.authorId)}</span> <span class="mx-2">|</span> ${new Date(p.date).toLocaleString()}
+                </div>
+                <div class="content-area mb-5">${escapeHtml(p.content)}</div>
                 ${p.fileUrl ? `
-                    <div class="p-3 bg-light rounded d-flex justify-content-between align-items-center mb-4">
-                        <span class="small">📎 첨부파일: ${p.fileName}</span>
-                        <a href="${p.fileUrl}" target="_blank" class="btn btn-sm btn-dark">다운로드</a>
+                    <div class="p-3 bg-light rounded-4 d-flex justify-content-between align-items-center mb-5 border">
+                        <span class="small fw-bold">📎 첨부파일: ${escapeHtml(p.fileName)}</span>
+                        <a href="${p.fileUrl}" target="_blank" class="btn btn-sm btn-dark px-3">다운로드</a>
                     </div>
                 ` : ''}
-                <button class="btn ${isLiked ? 'btn-danger' : 'btn-outline-danger'} px-4" onclick="handleLike()">❤️ 좋아요 ${p.likes || 0}</button>
+                <div class="text-center">
+                    <button class="btn ${isLiked ? 'btn-danger' : 'btn-outline-danger'} px-5 py-2 rounded-pill fw-bold" onclick="handleLike()">
+                        ❤️ 좋아요 ${p.likes || 0}
+                    </button>
+                </div>
             `;
         }
 
         async function deletePost(id) {
-            if(confirm("삭제하시겠습니까?")) { await db.collection("posts").doc(id).delete(); showPage('home'); }
+            if(confirm("정말로 이 게시글을 삭제하시겠습니까?")) {
+                await db.collection("posts").doc(id).delete();
+                alert("삭제되었습니다.");
+                showPage('home');
+            }
         }
 
-        // 6. 관리자 전용 문의 답변 기능
+        // 8. 1:1 문의 & 관리자 기능
+        async function sendInquiry() {
+            const txt = document.getElementById('inqInput').value.trim();
+            if(!txt || !state.user) return alert("내용을 입력해 주세요.");
+            await db.collection("inquiries").add({
+                userUid: state.user.uid, userId: state.user.id,
+                content: txt, answer: null, date: Date.now()
+            });
+            alert("관리자에게 문의가 접수되었습니다.");
+            document.getElementById('inqInput').value = '';
+            loadMyInquiries();
+        }
+
         async function loadAdminInquiries() {
             const snap = await db.collection("inquiries").orderBy("date", "desc").get();
             const list = document.getElementById('admin-inquiry-list');
             list.innerHTML = snap.docs.map(d => {
                 const data = d.data();
                 return `
-                    <div class="card p-3 mb-3 border-0 shadow-sm">
-                        <div class="small text-muted mb-2">작성자: ${data.userId} | ${new Date(data.date).toLocaleDateString()}</div>
-                        <div class="fw-bold mb-3">Q: ${data.content}</div>
-                        ${data.answer ? `<div class="p-2 bg-light text-primary rounded small">A: ${data.answer}</div>` : `
+                    <div class="card p-4 mb-3">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="badge bg-secondary">From: ${escapeHtml(data.userId)}</span>
+                            <span class="small text-muted">${new Date(data.date).toLocaleDateString()}</span>
+                        </div>
+                        <div class="fw-bold mb-3 fs-5">질문: ${escapeHtml(data.content)}</div>
+                        ${data.answer ? `<div class="p-3 bg-light text-primary rounded-3 small fw-bold">답변: ${escapeHtml(data.answer)}</div>` : `
                             <div class="input-group">
-                                <input id="ans-${d.id}" class="form-control" placeholder="답변 입력...">
-                                <button class="btn btn-primary" onclick="answerInquiry('${d.id}', '${data.userUid}')">답변</button>
+                                <input id="ans-${d.id}" class="form-control p-2" placeholder="답변 내용을 작성하세요">
+                                <button class="btn btn-primary px-4" onclick="answerInquiry('${d.id}', '${data.userUid}')">답변등록</button>
                             </div>
                         `}
                     </div>
@@ -318,90 +388,94 @@
             const ans = document.getElementById(`ans-${id}`).value;
             if(!ans) return;
             await db.collection("inquiries").doc(id).update({ answer: ans });
-            sendNoti(userUid, `💬 문의하신 내용에 답변이 등록되었습니다.`);
+            sendNoti(userUid, `💬 문의하신 내용에 대한 운영자의 답변이 등록되었습니다.`);
             loadAdminInquiries();
-        }
-
-        // 7. 기타 기능 (좋아요, 댓글, 알림, 1:1문의) - 기존 코드 유지 및 연동
-        async function handleLike() {
-            if(!state.user) return alert("로그인하세요.");
-            const p = state.posts.find(x => x.fId === state.viewingId);
-            const ref = db.collection("posts").doc(state.viewingId);
-            if(p.likedBy?.includes(state.user.uid)) {
-                await ref.update({ likes: firebase.firestore.FieldValue.increment(-1), likedBy: firebase.firestore.FieldValue.arrayRemove(state.user.uid) });
-            } else {
-                await ref.update({ likes: firebase.firestore.FieldValue.increment(1), likedBy: firebase.firestore.FieldValue.arrayUnion(state.user.uid) });
-                if(p.authorUid !== state.user.uid) sendNoti(p.authorUid, `❤️ '${p.title}' 글에 좋아요가 달렸습니다!`);
-            }
-        }
-
-        async function addComment() {
-            const val = document.getElementById('commInput').value;
-            if(!val || !state.user) return;
-            const p = state.posts.find(x => x.fId === state.viewingId);
-            await db.collection("comments").add({ postId: state.viewingId, author: state.user.id, text: val, date: Date.now() });
-            document.getElementById('commInput').value = '';
-            if(p.authorUid !== state.user.uid) sendNoti(p.authorUid, `💬 '${p.title}' 글에 댓글이 달렸습니다.`);
-        }
-
-        function loadComments(postId) {
-            db.collection("comments").where("postId", "==", postId).orderBy("date", "asc").onSnapshot(snap => {
-                document.getElementById('comment-total').innerText = snap.size;
-                document.getElementById('comment-list').innerHTML = snap.docs.map(d => `
-                    <div class="p-3 mb-2 rounded bg-light small">
-                        <div class="d-flex justify-content-between mb-1"><span class="fw-bold text-primary">${d.data().author}</span></div>
-                        <div>${d.data().text}</div>
-                    </div>
-                `).join('');
-            });
-        }
-
-        async function sendNoti(to, msg) { await db.collection("notis").add({ to, msg, read: false, date: Date.now() }); }
-        
-        function loadNotis() {
-            db.collection("notis").where("to", "==", state.user.uid).orderBy("date", "desc").onSnapshot(snap => {
-                const unread = snap.docs.filter(d => !d.data().read).length;
-                document.getElementById('noti-count').innerText = unread;
-                document.getElementById('noti-count').style.display = unread > 0 ? 'block' : 'none';
-                document.getElementById('noti-list').innerHTML = snap.docs.map(d => `
-                    <div class="card p-3 mb-2 ${d.data().read ? 'opacity-50' : 'border-primary'}" onclick="db.collection('notis').doc('${d.id}').update({read:true})">
-                        ${d.data().msg}
-                    </div>
-                `).join('');
-            });
-        }
-
-        async function sendInquiry() {
-            const txt = document.getElementById('inqInput').value;
-            if(!txt || !state.user) return;
-            await db.collection("inquiries").add({ userUid: state.user.uid, userId: state.user.id, content: txt, answer: null, date: Date.now() });
-            alert("접수되었습니다."); document.getElementById('inqInput').value = '';
         }
 
         function loadMyInquiries() {
             db.collection("inquiries").where("userUid", "==", state.user.uid).orderBy("date", "desc").onSnapshot(snap => {
                 document.getElementById('my-inq-list').innerHTML = snap.docs.map(d => `
                     <div class="card p-3 mb-2 border-0 shadow-sm">
-                        <div class="fw-bold">Q: ${d.data().content}</div>
-                        <div class="mt-2 small ${d.data().answer ? 'text-primary' : 'text-muted'}">${d.data().answer ? 'A: ' + d.data().answer : '답변 대기 중'}</div>
+                        <div class="small fw-bold mb-1">Q: ${escapeHtml(d.data().content)}</div>
+                        <div class="mt-2 p-2 rounded bg-light small ${d.data().answer ? 'text-primary' : 'text-muted'}">
+                            ${d.data().answer ? '✅ 답변: ' + escapeHtml(d.data().answer) : '⏳ 답변 대기 중입니다.'}
+                        </div>
                     </div>
                 `).join('');
             });
         }
 
+        // 9. 알림, 좋아요, 댓글 (유지)
+        async function sendNoti(to, msg) {
+            await db.collection("notis").add({ to, msg, read: false, date: Date.now() });
+        }
+
+        function loadNotis() {
+            db.collection("notis").where("to", "==", state.user.uid).orderBy("date", "desc").onSnapshot(snap => {
+                const unread = snap.docs.filter(d => !d.data().read).length;
+                const badge = document.getElementById('noti-count');
+                badge.innerText = unread;
+                badge.style.display = unread > 0 ? 'block' : 'none';
+                
+                document.getElementById('noti-list').innerHTML = snap.docs.map(d => `
+                    <div class="card p-3 mb-2 ${d.data().read ? 'opacity-50' : 'border-primary'}" 
+                         onclick="db.collection('notis').doc('${d.id}').update({read:true})">
+                        ${escapeHtml(d.data().msg)}
+                    </div>
+                `).join('');
+            });
+        }
+
+        async function handleLike() {
+            if(!state.user) return alert("로그인이 필요합니다.");
+            const p = state.posts.find(x => x.fId === state.viewingId);
+            const ref = db.collection("posts").doc(state.viewingId);
+            if(p.likedBy?.includes(state.user.uid)) {
+                await ref.update({ likes: firebase.firestore.FieldValue.increment(-1), likedBy: firebase.firestore.FieldValue.arrayRemove(state.user.uid) });
+            } else {
+                await ref.update({ likes: firebase.firestore.FieldValue.increment(1), likedBy: firebase.firestore.FieldValue.arrayUnion(state.user.uid) });
+                if(p.authorUid !== state.user.uid) sendNoti(p.authorUid, `❤️ 누군가 내 글 '${p.title.substring(0,10)}...'을 좋아합니다.`);
+            }
+        }
+
+        async function addComment() {
+            const val = document.getElementById('commInput').value.trim();
+            if(!val || !state.user) return;
+            const p = state.posts.find(x => x.fId === state.viewingId);
+            await db.collection("comments").add({ postId: state.viewingId, author: state.user.id, text: val, date: Date.now() });
+            document.getElementById('commInput').value = '';
+            if(p.authorUid !== state.user.uid) sendNoti(p.authorUid, `💬 '${p.title.substring(0,10)}...' 글에 새 댓글이 달렸습니다.`);
+        }
+
+        function loadComments(postId) {
+            db.collection("comments").where("postId", "==", postId).orderBy("date", "asc").onSnapshot(snap => {
+                document.getElementById('comment-total').innerText = snap.size;
+                document.getElementById('comment-list').innerHTML = snap.docs.map(d => `
+                    <div class="p-3 mb-2 rounded-4 bg-light small">
+                        <div class="fw-bold text-primary mb-1">${escapeHtml(d.data().author)}</div>
+                        <div>${escapeHtml(d.data().text)}</div>
+                    </div>
+                `).join('');
+            });
+        }
+
+        // 10. 로그인/가입 (유지)
         async function handleLogin() {
-            try { await auth.signInWithEmailAndPassword(document.getElementById('authEmail').value, document.getElementById('authPassword').value); showPage('home'); } catch(e) { alert("로그인 실패"); }
+            const email = document.getElementById('authEmail').value;
+            const pw = document.getElementById('authPassword').value;
+            try { await auth.signInWithEmailAndPassword(email, pw); showPage('home'); } catch(e) { alert("계정 정보가 올바르지 않습니다."); }
         }
         
         async function handleSignUp() {
             const email = document.getElementById('authEmail').value;
             const pw = document.getElementById('authPassword').value;
+            if(!email || pw.length < 6) return alert("올바른 이메일과 6자리 이상의 비번을 입력하세요.");
             try {
                 const cred = await auth.createUserWithEmailAndPassword(email, pw);
                 await db.collection("users").doc(cred.user.uid).set({
                     id: email.split('@')[0], role: 'member', date: Date.now()
                 });
-                alert("가입 완료!"); showPage('home');
+                alert("가입을 축하드립니다!"); showPage('home');
             } catch(e) { alert(e.message); }
         }
 
