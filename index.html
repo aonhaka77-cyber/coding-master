@@ -221,7 +221,7 @@
 
         // 5. Post CRUD
         function loadData() {
-            db.collection("posts").orderBy("date", "desc").onSnapshot(snap => {
+            db.collection("posts").orderBy("date", "asc").onSnapshot(snap => {
                 state.posts = snap.docs.map(d => ({ fId: d.id, ...d.data() }));
                 renderPosts();
                 // 상세페이지 보고 있을 경우 실시간 업데이트
@@ -428,3 +428,4 @@
     </script>
 </body>
 </html>
+
